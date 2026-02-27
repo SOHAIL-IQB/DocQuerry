@@ -59,6 +59,13 @@ const generateAnswer = async (userId, question) => {
     // 2. Retrieve relevant chunks (already limits to 5)
     const sources = await retrieveRelevantChunks(userId, queryEmbedding);
 
+    if (sources.length === 0) {
+      return {
+        answer: 'The uploaded documents do not contain this information.',
+        sources: []
+      };
+    }
+
     // 3. Construct Context Blocks
     let contextStr = '';
     sources.forEach((source, index) => {
@@ -88,7 +95,7 @@ Do not fabricate.`;
     });
 
     const result = await model.generateContent(prompt);
-    const answer = result.response.text();
+    const answer = result?.response?.text?.() || "The uploaded documents do not contain this information.";
 
     // 6. Return exact payload
     return {
