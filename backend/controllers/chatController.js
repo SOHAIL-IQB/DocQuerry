@@ -1,0 +1,181 @@
+const Chat = require('../models/Chat');
+const Message = require('../models/Message');
+const { generateAnswer } = require('../services/ragService');
+
+// @desc    Create a new chat
+// @route   POST /api/chat/create
+// @access  Private
+const createChat = async (req, res) => {
+  try {
+    const chat = await Chat.create({
+      userId: req.user._id,
+      title: req.body.title || 'New Chat'
+    });
+
+    res.status(201).json({
+      success: true,
+      data: chat
+    });
+  } catch (error) {
+    console.error('Error in createChat:', error);
+    res.status(500).json({ success: false, error: 'Server error' });
+  }
+};
+
+// @desc    Send a message to a chat
+// @route   POST /api/chat/message
+// @access  Private
+const sendMessage = async (req, res) => {
+  try {
+    const { chatId, question } = req.body;
+
+    if (!chatId || !question) {
+      return res.status(400).json({ success: false, error: 'chatId and question are required' });
+    }
+
+    // 1. Fetch the chat
+    const chat = await Chat.findById(chatId);
+
+    // 2. Validate existence
+    if (!chat) {
+      return res.status(404).json({ success: false, error: 'Chat not found' });
+    }
+
+    // 3. Validate ownership using explicit bounds
+    if (chat.userId.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ success: false, error: 'Not authorized to access this chat' });
+    }
+
+    // 4. Save user message first
+    await Message.create({
+      chatId: chat._id,
+      role: 'user',
+      content: question
+    });
+
+    // 5. Call RAG logic safely
+    let aiResponse;
+    try {
+      aiResponse = await generateAnswer(req.user._id, question);
+    } catch (llmError) {
+      console.error('generateAnswer error:', llmError);
+      return res.status(500).json({ success: false, error: 'Failed to generate answer' });
+    }
+
+    // 6. Save assistant message
+    const assistantMessage = await Message.create({
+      chatId: chat._id,
+      role: 'assistant',
+      content: aiResponse.answer,
+      sources: aiResponse.sources
+    });
+
+    // 7. Return payload
+    res.status(201).json({
+      success: true,
+      data: {
+        answer: assistantMessage.content,
+        sources: assistantMessage.sources
+      }
+    });
+
+  } catch (error) {
+    console.error('Error in sendMessage:', error);
+    res.status(500).json({ success: false, error: 'Server error' });
+  }
+};
+
+// @desc    Get all messages for a chat
+// @route   GET /api/chat/:chatId
+// @access  Private
+const getChatHistory = async (req, res) => {
+  try {
+    const chatId = req.params.chatId;
+
+    // 1. Fetch the chat
+    const chat = await Chat.findById(chatId);
+
+    if (!chat) {
+      return res.status(404).json({ success: false, error: 'Chat not found' });
+    }
+
+    // 2. Validate ownership safely
+    if (chat.userId.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ success: false, error: 'Not authorized to access this chat' });
+    }
+
+    // 3. Fetch specific messages ordered explicitly Ascending by creation
+    const messages = await Message.find({ chatId: chat._id }).sort({ createdAt: 1 });
+
+    res.status(200).json({
+      success: true,
+      data: messages
+    });
+
+  } catch (error) {
+    console.error('Error in getChatHistory:', error);
+    res.status(500).json({ success: false, error: 'Server error' });
+  }
+};
+
+// @desc    Delete a chat
+// @route   DELETE /api/chat/:chatId
+// @access  Private
+const deleteChat = async (req, res) => {
+  try {
+    const chatId = req.params.chatId;
+
+    // 1. Fetch the chat
+    const chat = await Chat.findById(chatId);
+
+    if (!chat) {
+      return res.status(404).json({ success: false, error: 'Chat not found' });
+    }
+
+    // 2. Validate ownership safely
+    if (chat.userId.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ success: false, error: 'Not authorized to delete this chat' });
+    }
+
+    // 3. Cascade Delete Safety - Delete child messages first
+    await Message.deleteMany({ chatId: chat._id });
+
+    // 4. Delete the chat itself
+    await chat.deleteOne();
+
+    res.status(200).json({
+      success: true,
+      data: {}
+    });
+
+  } catch (error) {
+    console.error('Error in deleteChat:', error);
+    res.status(500).json({ success: false, error: 'Server error' });
+  }
+};
+
+// @desc    Get all chats for a user
+// @route   GET /api/chat
+// @access  Private
+const getAllChats = async (req, res) => {
+  try {
+    // strict user filter
+    const chats = await Chat.find({ userId: req.user._id }).sort({ updatedAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      data: chats
+    });
+  } catch (error) {
+    console.error('Error in getAllChats:', error);
+    res.status(500).json({ success: false, error: 'Server error' });
+  }
+};
+
+module.exports = {
+  createChat,
+  sendMessage,
+  getAllChats,
+  getChatHistory,
+  deleteChat
+};
