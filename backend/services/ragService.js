@@ -81,7 +81,7 @@ Do not fabricate.`;
 
     // 5. Invoke Gemini LLM
     const model = genAI.getGenerativeModel({ 
-      model: 'gemini-1.5-flash',
+      model: 'models/gemini-flash-latest',
       generationConfig: {
         temperature: 0.2
       }
