@@ -16,6 +16,9 @@ app.use(cors());
 app.use(helmet());
 app.use(morgan('dev'));
 
+// Routes
+app.use('/api/auth', require('./routes/authRoutes'));
+
 // Basic Health Check Route
 app.get('/api/health', (req, res) => {
   res.json({ success: true, message: 'DocuQuery AI Backend is running smoothly.' });
