@@ -1,6 +1,9 @@
 const Document = require('../models/Document');
 const User = require('../models/User');
+const DocumentChunk = require('../models/DocumentChunk');
 const { extractText } = require('../utils/extractText');
+const { chunkText } = require('../utils/chunkText');
+const { generateEmbedding } = require('../utils/gemini');
 
 // @desc    Upload and process a document
 // @route   POST /api/documents/upload
@@ -24,7 +27,26 @@ const uploadDocument = async (req, res) => {
     try {
       extractedText = await extractText(req.file.buffer, req.file.mimetype);
       
-      // Update document status to Ready (In Phase 4, we'll do chunking here before setting Ready)
+      // 3. Chunk text and generate embeddings
+      const chunks = chunkText(extractedText);
+      
+      const chunkPromises = chunks.map(async (chunkTextStr, index) => {
+        const embedding = await generateEmbedding(chunkTextStr);
+        return {
+          documentId: newDoc._id,
+          userId: req.user._id,
+          text: chunkTextStr,
+          embedding: embedding,
+          chunkIndex: index
+        };
+      });
+
+      const chunkDocs = await Promise.all(chunkPromises);
+      if (chunkDocs.length > 0) {
+        await DocumentChunk.insertMany(chunkDocs);
+      }
+
+      // Update document status to Ready
       newDoc.status = 'Ready';
       await newDoc.save();
 
@@ -41,7 +63,8 @@ const uploadDocument = async (req, res) => {
     } catch (extractionError) {
       newDoc.status = 'Failed';
       await newDoc.save();
-      return res.status(500).json({ success: false, error: extractionError.message });
+      console.error('Processing error:', extractionError);
+      return res.status(500).json({ success: false, error: 'Processing failed: ' + extractionError.message });
     }
   } catch (error) {
     console.error('uploadDocument catch:', error.stack);
@@ -101,7 +124,10 @@ const deleteDocument = async (req, res) => {
     // Capture file size to deduct from user storage
     const sizeToDeduct = document.fileSize;
 
-    // Delete document (In future phases, also delete vector chunks from DB!)
+    // Delete document chunks from DB
+    await DocumentChunk.deleteMany({ documentId: req.params.id });
+
+    // Delete document
     await Document.deleteOne({ _id: req.params.id });
 
     // Update user's storage
