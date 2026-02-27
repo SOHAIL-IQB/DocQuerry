@@ -18,6 +18,7 @@ app.use(morgan('dev'));
 
 // Routes
 app.use('/api/auth', require('./routes/authRoutes'));
+app.use('/api/documents', require('./routes/documentRoutes'));
 
 // Basic Health Check Route
 app.get('/api/health', (req, res) => {
