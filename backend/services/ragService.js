@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const DocumentChunk = require('../models/DocumentChunk');
+const { genAI, generateEmbedding } = require('../utils/gemini');
 
 /**
  * Retrieves the most relevant document chunks for a given query embedding.
@@ -42,6 +43,66 @@ const retrieveRelevantChunks = async (userId, queryEmbedding) => {
   }
 };
 
+/**
+ * Generates an answer to a user's question purely based on the retrieved context chunks.
+ * Uses Google Gemini 1.5 Flash with strict grounding instructions.
+ * 
+ * @param {string} userId - The ID of the user (for workspace isolation).
+ * @param {string} question - The user's prompt question.
+ * @returns {Promise<Object>} - Contains { answer: string, sources: Array }
+ */
+const generateAnswer = async (userId, question) => {
+  try {
+    // 1. Generate embedding for user query
+    const queryEmbedding = await generateEmbedding(question);
+
+    // 2. Retrieve relevant chunks (already limits to 5)
+    const sources = await retrieveRelevantChunks(userId, queryEmbedding);
+
+    // 3. Construct Context Blocks
+    let contextStr = '';
+    sources.forEach((source, index) => {
+      contextStr += `\\n--- Chunk ${index + 1} ---\\n${source.chunkText}\\n`;
+    });
+
+    // 4. Construct Strict Prompt
+    const prompt = `Context:
+${contextStr}
+
+Question:
+${question}
+
+Instructions:
+Answer strictly using the context above.
+If the answer is not found, respond with:
+"The uploaded documents do not contain this information."
+Do not guess.
+Do not fabricate.`;
+
+    // 5. Invoke Gemini LLM
+    const model = genAI.getGenerativeModel({ 
+      model: 'gemini-1.5-flash',
+      generationConfig: {
+        temperature: 0.2
+      }
+    });
+
+    const result = await model.generateContent(prompt);
+    const answer = result.response.text();
+
+    // 6. Return exact payload
+    return {
+      answer: answer,
+      sources: sources
+    };
+
+  } catch (error) {
+    console.error('Error in generateAnswer:', error);
+    throw new Error('Failed to generate answer from LLM.');
+  }
+};
+
 module.exports = {
-  retrieveRelevantChunks
+  retrieveRelevantChunks,
+  generateAnswer
 };
