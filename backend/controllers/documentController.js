@@ -4,6 +4,7 @@ const DocumentChunk = require('../models/DocumentChunk');
 const { extractText } = require('../utils/extractText');
 const { chunkText } = require('../utils/chunkText');
 const { generateEmbedding } = require('../utils/gemini');
+const { retrieveRelevantChunks } = require('../services/ragService');
 
 // @desc    Upload and process a document
 // @route   POST /api/documents/upload
