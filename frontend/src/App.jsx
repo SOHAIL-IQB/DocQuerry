@@ -6,12 +6,12 @@ import AppLayout from './components/layout/AppLayout';
 import ChatWorkspace from './pages/ChatWorkspace';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import Documents from './pages/Documents';
 
 // Temporary Mock Pages
 const Landing = () => <div style={{ padding: '40px', textAlign: 'center' }}><h1>DocuQuery AI</h1><p><a href="/login" style={{color: 'var(--accent-color)'}}>Go to Login</a></p></div>;
 
 const Dashboard = () => <div><h1>Dashboard Overview</h1><p style={{color: 'var(--text-secondary)', marginTop: '8px'}}>Stats will appear here.</p></div>;
-const Documents = () => <div><h1>Document Library</h1><p style={{color: 'var(--text-secondary)', marginTop: '8px'}}>File management will appear here.</p></div>;
 
 function App() {
   return (
