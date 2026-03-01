@@ -45,7 +45,7 @@ const Documents = () => {
     setError('');
     
     const formData = new FormData();
-    formData.append('file', file);
+    formData.append('document', file);
 
     try {
       const { data } = await api.post('/documents/upload', formData, {
