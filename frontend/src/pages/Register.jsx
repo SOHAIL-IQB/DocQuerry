@@ -33,7 +33,7 @@ const Register = () => {
       
       if (data.success) {
         // Hydrate global auth context directly into the app
-        login(data.token, data.user);
+        login(data.data.token, data.data);
         navigate('/dashboard', { replace: true });
       }
     } catch (err) {

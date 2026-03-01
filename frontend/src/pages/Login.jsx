@@ -28,7 +28,7 @@ const Login = () => {
       
       if (data.success) {
         // Hydrate global auth context
-        login(data.token, data.user);
+        login(data.data.token, data.data);
         navigate('/dashboard', { replace: true });
       }
     } catch (err) {
