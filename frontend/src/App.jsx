@@ -12,33 +12,61 @@ import Dashboard from './pages/Dashboard';
 // Temporary Mock Pages
 const Landing = () => <div style={{ padding: '40px', textAlign: 'center' }}><h1>DocuQuery AI</h1><p><a href="/login" style={{color: 'var(--accent-color)'}}>Go to Login</a></p></div>;
 
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null, errorInfo: null };
+  }
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+  componentDidCatch(error, errorInfo) {
+    console.error("ErrorBoundary caught an error", error, errorInfo);
+    this.setState({ errorInfo });
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ padding: "40px", backgroundColor: "#fff", color: "#000", zIndex: 99999 }}>
+          <h2>Application Crashed</h2>
+          <pre>{this.state.error?.toString()}</pre>
+          <pre style={{ fontSize: "12px", whiteSpace: "pre-wrap" }}>{this.state.errorInfo?.componentStack}</pre>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 function App() {
   return (
-    <AuthProvider>
-      <BrowserRouter>
-        <Routes>
-          {/* Public Routes (Only accessible if NOT logged in) */}
-          <Route element={<PublicRoute />}>
-            <Route path="/" element={<Landing />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-          </Route>
-
-          {/* Protected Application Routes wrapped in AppLayout */}
-          <Route element={<ProtectedRoute />}>
-            <Route element={<AppLayout />}>
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/documents" element={<Documents />} />
-              <Route path="/chat" element={<ChatWorkspace />} />
-              <Route path="/chat/:chatId" element={<ChatWorkspace />} />
+    <ErrorBoundary>
+      <AuthProvider>
+        <BrowserRouter>
+          <Routes>
+            {/* Public Routes (Only accessible if NOT logged in) */}
+            <Route element={<PublicRoute />}>
+              <Route path="/" element={<Landing />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
             </Route>
-          </Route>
 
-          {/* Fallback */}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </BrowserRouter>
-    </AuthProvider>
+            {/* Protected Application Routes wrapped in AppLayout */}
+            <Route element={<ProtectedRoute />}>
+              <Route element={<AppLayout />}>
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/documents" element={<Documents />} />
+                <Route path="/chat" element={<ChatWorkspace />} />
+                <Route path="/chat/:chatId" element={<ChatWorkspace />} />
+              </Route>
+            </Route>
+
+            {/* Fallback */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </BrowserRouter>
+      </AuthProvider>
+    </ErrorBoundary>
   );
 }
 

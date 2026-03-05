@@ -247,9 +247,11 @@ const MessageBubble = ({ message }) => {
           {isUser ? (
              message.content 
           ) : (
-            <ReactMarkdown className="markdown-content">
-              {message.content}
-            </ReactMarkdown>
+            <div className="markdown-content">
+              <ReactMarkdown>
+                {message.content}
+              </ReactMarkdown>
+            </div>
           )}
         </div>
         
