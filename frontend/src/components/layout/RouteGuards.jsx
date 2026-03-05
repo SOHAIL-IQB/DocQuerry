@@ -6,13 +6,7 @@ import { Loader2 } from 'lucide-react';
 export const ProtectedRoute = () => {
   const { user, loading } = useAuth();
 
-  if (loading) {
-    return (
-      <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <Loader2 className="spin" size={32} style={{ color: 'var(--accent-color)' }} />
-      </div>
-    );
-  }
+  if (loading) return null;
 
   // If no user object, immediately bounce to login
   if (!user) {
@@ -25,13 +19,7 @@ export const ProtectedRoute = () => {
 export const PublicRoute = () => {
   const { user, loading } = useAuth();
 
-  if (loading) {
-    return (
-      <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <Loader2 className="spin" size={32} style={{ color: 'var(--accent-color)' }} />
-      </div>
-    );
-  }
+  if (loading) return null;
 
   // If already authenticated, block access to Login/Register and bounce into the app
   if (user) {

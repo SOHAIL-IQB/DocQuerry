@@ -1,9 +1,11 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { LayoutDashboard, FileText, MessageSquare, Settings, LogOut } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 import './Sidebar.css';
 
 const Sidebar = () => {
+  const { logout } = useAuth();
   return (
     <aside className="sidebar">
       <div className="sidebar-header">
@@ -34,7 +36,7 @@ const Sidebar = () => {
           <Settings size={20} />
           <span>Settings</span>
         </button>
-        <button className="nav-item exit-item">
+        <button className="nav-item exit-item" onClick={logout}>
           <LogOut size={20} />
           <span>Logout</span>
         </button>
