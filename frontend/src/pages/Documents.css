@@ -60,8 +60,8 @@
 
 .documents-top-panel {
     display: grid;
-    grid-template-columns: 1fr 2fr;
-    gap: 24px;
+    grid-template-columns: 1fr 1.5fr;
+    gap: 32px;
 }
 
 /* --- Storage Meter Component --- */
@@ -144,7 +144,7 @@
 
 .upload-zone {
     flex: 1;
-    border: 2px dashed rgba(255, 255, 255, 0.15);
+    border: 2px dashed rgba(255, 255, 255, 0.12);
     border-radius: 12px;
     background-color: rgba(255, 255, 255, 0.02);
     display: flex;
@@ -282,22 +282,21 @@
     margin-bottom: 4px;
 }
 
-/* --- Document Row Component --- */
 .document-row {
     display: flex;
     align-items: center;
     background-color: var(--bg-surface);
     border: 1px solid var(--border-color);
     border-radius: 10px;
-    padding: 16px;
-    gap: 16px;
-    transition: transform 0.2s, box-shadow 0.2s;
+    padding: 16px 20px;
+    gap: 20px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
 .document-row:hover {
-    transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     border-color: rgba(255, 255, 255, 0.12);
+    background-color: rgba(255, 255, 255, 0.02);
 }
 
 .doc-icon-wrapper {

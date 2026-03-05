@@ -67,11 +67,11 @@
     background-color: var(--bg-surface);
     border: 1px solid var(--border-color);
     border-radius: 16px;
-    padding: 24px;
+    padding: 24px 28px;
     display: flex;
     align-items: center;
-    gap: 20px;
-    transition: transform 0.2s, box-shadow 0.2s;
+    gap: 24px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .metric-card:hover {
@@ -163,8 +163,8 @@
 /* Lower Split Layout */
 .dashboard-content-grid {
     display: grid;
-    grid-template-columns: 2fr 1fr;
-    gap: 24px;
+    grid-template-columns: 1.8fr 1fr;
+    gap: 32px;
 }
 
 .dashboard-panel {
@@ -221,33 +221,30 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 16px 0;
+    padding: 14px 16px;
     text-decoration: none;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-    transition: padding-left 0.2s;
+    border-radius: 8px;
+    border-bottom: 1px solid transparent;
+    transition: background-color 0.2s ease, transform 0.2s ease;
+    margin-bottom: 4px;
 }
 
 .recent-chat-row:last-child {
-    border-bottom: none;
-    padding-bottom: 0;
-}
-
-.recent-chat-row:first-child {
-    padding-top: 0;
+    margin-bottom: 0;
 }
 
 .recent-chat-row:hover {
-    padding-left: 8px;
+    background-color: rgba(255, 255, 255, 0.03);
 }
 
 .recent-chat-row:hover .chat-title {
-    color: var(--accent-color);
+    color: var(--text-primary);
 }
 
 .recent-chat-row:hover .hover-arrow {
     opacity: 1;
     transform: translateX(4px);
-    color: var(--accent-color);
+    color: var(--text-secondary);
 }
 
 .chat-row-left {
@@ -265,6 +262,10 @@
     color: var(--text-primary);
     font-size: 0.95rem;
     transition: color 0.2s;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 280px;
 }
 
 .chat-row-right {

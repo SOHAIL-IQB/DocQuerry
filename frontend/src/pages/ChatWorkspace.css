@@ -85,7 +85,9 @@
 }
 
 .history-chat-row.active {
-    background-color: rgba(59, 130, 246, 0.1);
+    background-color: rgba(59, 130, 246, 0.08);
+    border-left: 3px solid var(--accent-color);
+    border-radius: 4px 8px 8px 4px;
 }
 
 .history-chat-row.active .history-chat-title {
@@ -150,8 +152,8 @@
 .chat-messages-content {
     display: flex;
     flex-direction: column;
-    gap: 32px;
-    padding-bottom: 24px;
+    gap: 24px;
+    padding-bottom: 32px;
 }
 
 .empty-chat-state {
@@ -180,7 +182,7 @@
 .message-wrapper {
     display: flex;
     gap: 16px;
-    max-width: 85%;
+    max-width: 75%;
 }
 
 .message-wrapper.user {
@@ -341,8 +343,9 @@
 
 /* Interactive Input Area */
 .chat-input-container {
-    padding: 24px 0 0 0;
-    background-color: var(--bg-app);
+    padding: 24px;
+    background-color: var(--bg-surface);
+    border-top: 1px solid var(--border-color);
 }
 
 .chat-input-form {
