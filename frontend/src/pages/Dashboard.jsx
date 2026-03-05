@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
-import { Layers, FileText, MessageSquare, HardDrive, ArrowRight, Loader2, Bot } from 'lucide-react';
+import { Layers, FileText, MessageSquare, HardDrive, ArrowRight, Loader2, Bot, Trash2 } from 'lucide-react';
+import ConfirmationModal from '../components/common/ConfirmationModal';
 import './Dashboard.css';
 
 const Dashboard = () => {
@@ -10,6 +11,10 @@ const Dashboard = () => {
   const [analytics, setAnalytics] = useState(null);
   const [recentChats, setRecentChats] = useState([]);
   const [loading, setLoading] = useState(true);
+  
+  // Modal State
+  const [modalOpen, setModalOpen] = useState(false);
+  const [chatToDelete, setChatToDelete] = useState(null);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -39,6 +44,35 @@ const Dashboard = () => {
 
     fetchDashboardData();
   }, []);
+
+  const promptDelete = (e, chat) => {
+    e.preventDefault(); // Prevent navigating to the chat
+    e.stopPropagation();
+    setChatToDelete(chat);
+    setModalOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!chatToDelete) return;
+    const chatId = chatToDelete._id;
+    
+    // Optimistic UI updates
+    setRecentChats(prev => prev.filter(c => c._id !== chatId));
+    setAnalytics(prev => ({
+      ...prev,
+      totalChats: Math.max(0, prev.totalChats - 1)
+    }));
+    
+    setModalOpen(false);
+    setChatToDelete(null);
+
+    try {
+      await api.delete(`/chat/${chatId}`);
+    } catch (err) {
+      console.error('Failed to delete chat', err);
+      // Could trigger an error toast here or reload the dashboard
+    }
+  };
 
   if (loading) {
     return (
@@ -129,6 +163,13 @@ const Dashboard = () => {
                     </div>
                     <div className="chat-row-right">
                       <span className="chat-date">{new Date(chat.updatedAt).toLocaleDateString()}</span>
+                      <button 
+                        className="delete-chat-btn" 
+                        onClick={(e) => promptDelete(e, chat)}
+                        title="Delete Chat"
+                      >
+                        <Trash2 size={16} />
+                      </button>
                       <ArrowRight size={14} className="hover-arrow" />
                     </div>
                   </Link>
@@ -166,6 +207,16 @@ const Dashboard = () => {
           </div>
         </div>
       </div>
+
+      <ConfirmationModal 
+        isOpen={modalOpen}
+        title="Delete Conversation"
+        message={`Are you sure you want to delete "${chatToDelete?.title}"? This conversation history cannot be recovered.`}
+        confirmText="Delete Chat"
+        isDestructive={true}
+        onCancel={() => setModalOpen(false)}
+        onConfirm={confirmDelete}
+      />
     </div>
   );
 };

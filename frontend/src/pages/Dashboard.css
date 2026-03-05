@@ -278,6 +278,30 @@
     color: var(--text-secondary);
 }
 
+.delete-chat-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0;
+    transition: all 0.2s;
+    padding: 6px;
+    border-radius: 6px;
+}
+
+.recent-chat-row:hover .delete-chat-btn {
+    opacity: 0.6;
+}
+
+.delete-chat-btn:hover {
+    background-color: rgba(239, 68, 68, 0.15);
+    color: #EF4444 !important;
+    opacity: 1 !important;
+}
+
 .hover-arrow {
     opacity: 0;
     transition: all 0.2s;
