@@ -100,6 +100,18 @@ const ChatWorkspace = () => {
     }
   };
 
+  const createNewChat = async (e) => {
+    e.preventDefault();
+    try {
+      const { data } = await api.post('/chat/create', { title: 'New Conversation' });
+      if (data.success) {
+        navigate(`/chat/${data.data._id}`);
+      }
+    } catch (err) {
+      console.error('Failed to create new chat:', err);
+    }
+  };
+
   const handleSend = async (e) => {
     e.preventDefault();
     if (!input.trim() || isTyping) return;
@@ -116,9 +128,9 @@ const ChatWorkspace = () => {
       <div className="chat-sidebar-history">
         <div className="sidebar-history-header">
           <h3>Chat History</h3>
-          <Link to="/chat" className="new-chat-btn">
+          <button onClick={createNewChat} className="new-chat-btn" style={{ border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.95rem', width: '100%' }}>
             <Plus size={16} /> New Chat
-          </Link>
+          </button>
         </div>
         <div className="sidebar-history-list">
           {allChats.map(chat => (
@@ -149,11 +161,11 @@ const ChatWorkspace = () => {
       <div className="chat-workspace">
         {/* Messages Container */}
         <div className="chat-messages-container">
-        {messages.length === 0 && !isTyping ? (
+        {(!messages || messages.length === 0) && !isTyping ? (
           <div className="empty-chat-state">
             <Bot size={48} className="empty-icon" />
-            <h2>How can I help you today?</h2>
-            <p>Upload a document to begin asking questions across your knowledge base.</p>
+            <h2>Start a new conversation.</h2>
+            <p>Ask a question about your uploaded documents.</p>
           </div>
         ) : (
           <div className="chat-messages-content">
