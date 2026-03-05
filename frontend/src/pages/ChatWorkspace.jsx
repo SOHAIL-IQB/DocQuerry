@@ -1,14 +1,22 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Send, Bot, User, Loader2, Info } from 'lucide-react';
+import { Send, Bot, User, Loader2, Info, Plus, MessageSquare, Trash2 } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import { Link } from 'react-router-dom';
 import { useChat } from '../hooks/useChat';
 import api from '../services/api';
+import ConfirmationModal from '../components/common/ConfirmationModal';
 import './ChatWorkspace.css';
 
 const ChatWorkspace = () => {
   const { chatId: urlChatId } = useParams();
   const navigate = useNavigate();
   const [input, setInput] = useState('');
+  const [allChats, setAllChats] = useState([]);
+  
+  // Modal State
+  const [modalOpen, setModalOpen] = useState(false);
+  const [chatToDelete, setChatToDelete] = useState(null);
   
   // Custom Hook initialized with URL param
   const { 
@@ -32,6 +40,22 @@ const ChatWorkspace = () => {
     if (urlChatId !== chatId) setChatId(urlChatId);
   }, [urlChatId, setChatId, chatId]);
 
+  // Fetch all chats for the sidebar
+  const fetchAllChats = async () => {
+    try {
+      const { data } = await api.get('/chat');
+      if (data.success) {
+        setAllChats(data.data);
+      }
+    } catch (err) {
+      console.error('Failed to load chat history:', err);
+    }
+  };
+
+  useEffect(() => {
+    fetchAllChats();
+  }, [urlChatId, isTyping]); // refresh sidebar when new chats are created or URL changes
+
   // Auto-select most recent chat if no chatId string
   useEffect(() => {
     if (!urlChatId) {
@@ -39,17 +63,42 @@ const ChatWorkspace = () => {
         try {
           const { data } = await api.get('/chat');
           if (data.success && data.data.length > 0) {
-            // Redirect to the latest chat
             navigate(`/chat/${data.data[0]._id}`, { replace: true });
           }
         } catch (err) {
           console.error('Initial chat load failed:', err);
         }
       };
-      // For Phase 8 we skip actual API Auth binding logic for this mockup wrapper
-      // fetchLatestChat(); 
+      fetchLatestChat();
     }
   }, [urlChatId, navigate]);
+
+  const promptDelete = (e, chat) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setChatToDelete(chat);
+    setModalOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!chatToDelete) return;
+    const delId = chatToDelete._id;
+    
+    // Optimistic cache removal
+    setAllChats(prev => prev.filter(c => c._id !== delId));
+    setModalOpen(false);
+    setChatToDelete(null);
+
+    try {
+      await api.delete(`/chat/${delId}`);
+      if (delId === urlChatId) {
+        navigate('/chat');
+      }
+    } catch (err) {
+      console.error('Failed to delete chat', err);
+      fetchAllChats(); // revert if failed
+    }
+  };
 
   const handleSend = async (e) => {
     e.preventDefault();
@@ -62,10 +111,44 @@ const ChatWorkspace = () => {
   };
 
   return (
-    <div className="chat-workspace">
-      
-      {/* Messages Container */}
-      <div className="chat-messages-container">
+    <div className="chat-layout">
+      {/* Sidebar History */}
+      <div className="chat-sidebar-history">
+        <div className="sidebar-history-header">
+          <h3>Chat History</h3>
+          <Link to="/chat" className="new-chat-btn">
+            <Plus size={16} /> New Chat
+          </Link>
+        </div>
+        <div className="sidebar-history-list">
+          {allChats.map(chat => (
+            <Link 
+              to={`/chat/${chat._id}`} 
+              key={chat._id} 
+              className={`history-chat-row ${urlChatId === chat._id ? 'active' : ''}`}
+            >
+              <div className="history-chat-left">
+                <MessageSquare size={16} />
+                <div className="history-chat-texts">
+                  <span className="history-chat-title">{chat.title || 'Conversation'}</span>
+                </div>
+              </div>
+              <button 
+                className="history-delete-btn" 
+                onClick={(e) => promptDelete(e, chat)}
+                title="Delete Chat"
+              >
+                <Trash2 size={14} />
+              </button>
+            </Link>
+          ))}
+        </div>
+      </div>
+
+      {/* Main Workspace */}
+      <div className="chat-workspace">
+        {/* Messages Container */}
+        <div className="chat-messages-container">
         {messages.length === 0 && !isTyping ? (
           <div className="empty-chat-state">
             <Bot size={48} className="empty-icon" />
@@ -123,6 +206,17 @@ const ChatWorkspace = () => {
           Responses are generated strictly from uploaded document context.
         </div>
       </div>
+
+      <ConfirmationModal 
+        isOpen={modalOpen}
+        title="Delete Conversation"
+        message={`Are you sure you want to delete "${chatToDelete?.title}"?`}
+        confirmText="Delete Chat"
+        isDestructive={true}
+        onCancel={() => setModalOpen(false)}
+        onConfirm={confirmDelete}
+      />
+    </div>
     </div>
   );
 };
@@ -138,7 +232,13 @@ const MessageBubble = ({ message }) => {
       </div>
       <div className="message-bubble-container">
         <div className="message-bubble">
-          {message.content}
+          {isUser ? (
+             message.content 
+          ) : (
+            <ReactMarkdown className="markdown-content">
+              {message.content}
+            </ReactMarkdown>
+          )}
         </div>
         
         {/* Render Source Citations if they exist on Assistant Responses */}
