@@ -279,7 +279,8 @@
     color: var(--text-secondary);
 }
 
-.delete-chat-btn {
+.delete-chat-btn,
+.rename-chat-btn {
     background: transparent;
     border: none;
     color: var(--text-secondary);
@@ -293,13 +294,20 @@
     border-radius: 6px;
 }
 
-.recent-chat-row:hover .delete-chat-btn {
+.recent-chat-row:hover .delete-chat-btn,
+.recent-chat-row:hover .rename-chat-btn {
     opacity: 0.6;
 }
 
 .delete-chat-btn:hover {
     background-color: rgba(239, 68, 68, 0.15);
     color: #EF4444 !important;
+    opacity: 1 !important;
+}
+
+.rename-chat-btn:hover {
+    background-color: rgba(59, 130, 246, 0.15);
+    color: var(--accent-color) !important;
     opacity: 1 !important;
 }
 

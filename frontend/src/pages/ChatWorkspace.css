@@ -119,25 +119,59 @@
     max-width: 160px;
 }
 
-.history-delete-btn {
+.history-chat-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
     opacity: 0;
+    transition: all 0.2s;
+}
+
+.history-chat-row:hover .history-chat-actions {
+    opacity: 1;
+}
+
+.history-delete-btn,
+.history-rename-btn {
     background: transparent;
     border: none;
     color: var(--text-secondary);
     cursor: pointer;
-    padding: 4px;
+    padding: 6px;
     border-radius: 4px;
     transition: all 0.2s;
-}
-
-.history-chat-row:hover .history-delete-btn {
-    opacity: 0.6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .history-delete-btn:hover {
     color: #EF4444;
     background-color: rgba(239, 68, 68, 0.1);
-    opacity: 1 !important;
+}
+
+.history-rename-btn:hover {
+    color: var(--accent-color);
+    background-color: rgba(59, 130, 246, 0.15);
+}
+
+/* Sidebar Rename Inline Form */
+.sidebar-rename-form {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.sidebar-rename-input {
+    flex: 1;
+    background-color: var(--bg-app);
+    border: 1px solid var(--accent-color);
+    border-radius: 4px;
+    padding: 4px 6px;
+    color: var(--text-primary);
+    font-size: 0.85rem;
+    outline: none;
+    width: 140px;
 }
 
 /* Messages Area */

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Send, Bot, User, Loader2, Info, Plus, MessageSquare, Trash2 } from 'lucide-react';
+import { Send, Bot, User, Loader2, Info, Plus, MessageSquare, Trash2, Edit2, Check, X } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { Link } from 'react-router-dom';
 import { useChat } from '../hooks/useChat';
@@ -17,6 +17,10 @@ const ChatWorkspace = () => {
   // Modal State
   const [modalOpen, setModalOpen] = useState(false);
   const [chatToDelete, setChatToDelete] = useState(null);
+  
+  // Rename State
+  const [editingChatId, setEditingChatId] = useState(null);
+  const [editTitle, setEditTitle] = useState('');
   
   // Custom Hook initialized with URL param
   const { 
@@ -80,6 +84,44 @@ const ChatWorkspace = () => {
     setModalOpen(true);
   };
 
+  const startRename = (e, chat) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setEditingChatId(chat._id);
+    setEditTitle(chat.title || 'Conversation');
+  };
+
+  const cancelRename = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setEditingChatId(null);
+    setEditTitle('');
+  };
+
+  const saveRename = async (e, id) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!editTitle.trim()) {
+      cancelRename(e);
+      return;
+    }
+
+    // Optimistically update the sidebar and local state if we are currently looking at it
+    const updatedTitle = editTitle.trim();
+    setAllChats(prev => prev.map(c => 
+      c._id === id ? { ...c, title: updatedTitle } : c
+    ));
+    setEditingChatId(null);
+
+    try {
+      await api.patch(`/chat/${id}/rename`, { title: updatedTitle });
+    } catch (err) {
+      console.error('Failed to rename chat:', err);
+      // Optional: Revert on fail
+    }
+  };
+
   const confirmDelete = async () => {
     if (!chatToDelete) return;
     const delId = chatToDelete._id;
@@ -141,17 +183,52 @@ const ChatWorkspace = () => {
             >
               <div className="history-chat-left">
                 <MessageSquare size={16} />
-                <div className="history-chat-texts">
-                  <span className="history-chat-title">{chat.title || 'Conversation'}</span>
-                </div>
+                {editingChatId === chat._id ? (
+                  <div className="sidebar-rename-form" onClick={(e) => e.preventDefault()}>
+                     <input 
+                       type="text"
+                       className="sidebar-rename-input"
+                       value={editTitle}
+                       onChange={e => setEditTitle(e.target.value)}
+                       onClick={e => e.preventDefault()}
+                       autoFocus
+                       onKeyDown={e => {
+                         if (e.key === 'Enter') saveRename(e, chat._id);
+                         if (e.key === 'Escape') cancelRename(e);
+                       }}
+                     />
+                     <button className="icon-btn success" onClick={(e) => saveRename(e, chat._id)} title="Save">
+                       <Check size={14} />
+                     </button>
+                     <button className="icon-btn cancel" onClick={cancelRename} title="Cancel">
+                       <X size={14} />
+                     </button>
+                  </div>
+                ) : (
+                  <div className="history-chat-texts">
+                    <span className="history-chat-title">{chat.title || 'Conversation'}</span>
+                  </div>
+                )}
               </div>
-              <button 
-                className="history-delete-btn" 
-                onClick={(e) => promptDelete(e, chat)}
-                title="Delete Chat"
-              >
-                <Trash2 size={14} />
-              </button>
+              
+              {editingChatId !== chat._id && (
+                <div className="history-chat-actions">
+                  <button 
+                    className="history-rename-btn" 
+                    onClick={(e) => startRename(e, chat)}
+                    title="Rename Chat"
+                  >
+                    <Edit2 size={14} />
+                  </button>
+                  <button 
+                    className="history-delete-btn" 
+                    onClick={(e) => promptDelete(e, chat)}
+                    title="Delete Chat"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              )}
             </Link>
           ))}
         </div>

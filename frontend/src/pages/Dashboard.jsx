@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
-import { Layers, FileText, MessageSquare, HardDrive, ArrowRight, Loader2, Bot, Trash2 } from 'lucide-react';
+import { Layers, FileText, MessageSquare, HardDrive, ArrowRight, Loader2, Bot, Trash2, Edit2, Check, X } from 'lucide-react';
 import ConfirmationModal from '../components/common/ConfirmationModal';
 import './Dashboard.css';
 
@@ -15,6 +15,10 @@ const Dashboard = () => {
   // Modal State
   const [modalOpen, setModalOpen] = useState(false);
   const [chatToDelete, setChatToDelete] = useState(null);
+
+  // Rename State
+  const [editingChatId, setEditingChatId] = useState(null);
+  const [editTitle, setEditTitle] = useState('');
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -31,8 +35,8 @@ const Dashboard = () => {
         }
         
         if (chatsRes.data.success) {
-           // Grab the top 3 most recent chats for the quick-access widget
-          setRecentChats(chatsRes.data.data.slice(0, 3));
+           // Allow discovery of all chats
+          setRecentChats(chatsRes.data.data);
         }
 
       } catch (err) {
@@ -71,6 +75,43 @@ const Dashboard = () => {
     } catch (err) {
       console.error('Failed to delete chat', err);
       // Could trigger an error toast here or reload the dashboard
+    }
+  };
+
+  const startRename = (e, chat) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setEditingChatId(chat._id);
+    setEditTitle(chat.title || 'Conversation');
+  };
+
+  const cancelRename = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setEditingChatId(null);
+    setEditTitle('');
+  };
+
+  const saveRename = async (e, chatId) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!editTitle.trim()) {
+      cancelRename(e);
+      return;
+    }
+
+    // Optimistic UI update
+    setRecentChats(prev => prev.map(c => 
+      c._id === chatId ? { ...c, title: editTitle.trim() } : c
+    ));
+    setEditingChatId(null);
+    
+    try {
+      await api.patch(`/chat/${chatId}/rename`, { title: editTitle.trim() });
+    } catch (err) {
+      console.error('Failed to rename chat:', err);
+      // Revert if API fails? In a robust app, yes.
     }
   };
 
@@ -154,25 +195,61 @@ const Dashboard = () => {
                 <Link to="/chat" className="text-accent">Start a new chat →</Link>
               </div>
             ) : (
-              <div className="recent-list">
+              <div className="recent-list" style={{ maxHeight: '400px', overflowY: 'auto', paddingRight: '8px' }}>
                 {recentChats.map(chat => (
-                  <Link to={`/chat/${chat._id}`} key={chat._id} className="recent-chat-row">
-                    <div className="chat-row-left">
-                      <MessageSquare size={16} className="text-secondary" />
-                      <span className="chat-title">{chat.title || 'Conversation'}</span>
-                    </div>
-                    <div className="chat-row-right">
-                      <span className="chat-date">{new Date(chat.updatedAt).toLocaleDateString()}</span>
-                      <button 
-                        className="delete-chat-btn" 
-                        onClick={(e) => promptDelete(e, chat)}
-                        title="Delete Chat"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                      <ArrowRight size={14} className="hover-arrow" />
-                    </div>
-                  </Link>
+                  <div key={chat._id} className="recent-chat-row-container" style={{ position: 'relative' }}>
+                    <Link to={`/chat/${chat._id}`} className="recent-chat-row">
+                      <div className="chat-row-left">
+                        <MessageSquare size={16} className="text-secondary" />
+                        {editingChatId === chat._id ? (
+                          <div className="doc-rename-form" onClick={e => e.preventDefault()}>
+                            <input 
+                              type="text"
+                              className="rename-input"
+                              value={editTitle}
+                              onChange={e => setEditTitle(e.target.value)}
+                              onClick={e => e.preventDefault()}
+                              autoFocus
+                              onKeyDown={e => {
+                                if (e.key === 'Enter') saveRename(e, chat._id);
+                                if (e.key === 'Escape') cancelRename(e);
+                              }}
+                            />
+                            <button className="icon-btn success" onClick={(e) => saveRename(e, chat._id)} title="Save">
+                              <Check size={14} />
+                            </button>
+                            <button className="icon-btn cancel" onClick={cancelRename} title="Cancel">
+                              <X size={14} />
+                            </button>
+                          </div>
+                        ) : (
+                          <span className="chat-title">{chat.title || 'Conversation'}</span>
+                        )}
+                      </div>
+                      <div className="chat-row-right">
+                        <span className="chat-date">{new Date(chat.updatedAt).toLocaleDateString()}</span>
+                        {editingChatId !== chat._id && (
+                          <div style={{ display: 'flex', gap: '4px' }}>
+                            <button 
+                              className="rename-chat-btn" 
+                              onClick={(e) => startRename(e, chat)}
+                              title="Rename Chat"
+                            >
+                              <Edit2 size={16} />
+                            </button>
+                            <button 
+                              className="delete-chat-btn" 
+                              onClick={(e) => promptDelete(e, chat)}
+                              title="Delete Chat"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                        )}
+                        <ArrowRight size={14} className="hover-arrow" />
+                      </div>
+                    </Link>
+                  </div>
                 ))}
               </div>
             )}
