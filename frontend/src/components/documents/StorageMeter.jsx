@@ -1,4 +1,5 @@
 import React from 'react';
+import { HardDrive } from 'lucide-react';
 
 const StorageMeter = ({ totalUsedBytes, maxBytes = 50 * 1024 * 1024 }) => {
   const percent = Math.min((totalUsedBytes / maxBytes) * 100, 100);
@@ -13,15 +14,20 @@ const StorageMeter = ({ totalUsedBytes, maxBytes = 50 * 1024 * 1024 }) => {
 
   return (
     <div className="storage-meter">
-      <div className="storage-header">
-        <span className="storage-title">Storage Usage</span>
-        <span className="storage-text">{usedMB} MB / {maxMB} MB</span>
+      <div className="metric-icon orange" style={{ marginBottom: '12px', width: '48px', height: '48px' }}>
+        <HardDrive size={20} />
       </div>
-      <div className="progress-bar-container">
-        <div 
-          className={`progress-bar-fill ${fillClass}`} 
-          style={{ width: `${percent}%` }}
-        ></div>
+      <div className="storage-wrapper" style={{ flex: 1, width: '100%' }}>
+        <div className="storage-header">
+          <span className="storage-title">Storage Usage</span>
+          <span className="storage-text">{usedMB} MB / {maxMB} MB</span>
+        </div>
+        <div className="progress-bar-container">
+          <div 
+            className={`progress-bar-fill ${fillClass}`} 
+            style={{ width: `${percent}%` }}
+          ></div>
+        </div>
       </div>
     </div>
   );
