@@ -20,8 +20,8 @@ const Settings = () => {
   const { user, login, logout } = useAuth();
   
   // Profile State
-  const [name, setName] = useState(user?.name || 'User');
-  const [avatar, setAvatar] = useState(user?.avatar || 'avatar1');
+  const [displayName, setDisplayName] = useState(user?.name || 'User');
+  const [selectedAvatar, setSelectedAvatar] = useState(user?.avatar || 'avatar1');
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [profileMessage, setProfileMessage] = useState({ text: '', type: '' });
 
@@ -48,14 +48,14 @@ const Settings = () => {
   const handleUpdateProfile = async (e) => {
     e.preventDefault();
     console.log('[Settings UI] -> handleUpdateProfile triggered');
-    console.log('Sending Payload:', { name, avatar });
+    console.log('Sending Payload:', { name: displayName, avatar: selectedAvatar });
     
     setIsSavingProfile(true);
     setProfileMessage({ text: '', type: '' });
 
     try {
       console.log('Dispatching PATCH /api/users/profile...');
-      const { data } = await api.patch('/users/profile', { name, avatar });
+      const { data } = await api.patch('/users/profile', { name: displayName, avatar: selectedAvatar });
       console.log('PATCH Success:', data);
       
       if (data.success) {
@@ -160,8 +160,8 @@ const Settings = () => {
                 <label>Display Name</label>
                 <input 
                   type="text" 
-                  value={name} 
-                  onChange={(e) => setName(e.target.value)} 
+                  value={displayName} 
+                  onChange={(e) => setDisplayName(e.target.value)} 
                   placeholder="Enter your name"
                   maxLength={50}
                   required
@@ -175,8 +175,8 @@ const Settings = () => {
                     <button 
                       type="button" 
                       key={id} 
-                      className={`avatar-btn ${avatar === id ? 'selected' : ''}`}
-                      onClick={() => setAvatar(id)}
+                      className={`avatar-btn ${selectedAvatar === id ? 'selected' : ''}`}
+                      onClick={() => setSelectedAvatar(id)}
                     >
                       <Icon size={24} />
                     </button>
@@ -185,7 +185,7 @@ const Settings = () => {
               </div>
 
               <div className="form-actions">
-                <button type="submit" className="btn-primary" disabled={isSavingProfile || !name.trim()}>
+                <button type="submit" className="btn-primary" disabled={isSavingProfile || !displayName.trim()}>
                   {isSavingProfile ? (
                     <>
                       <Loader2 className="spin" size={18} />

@@ -185,7 +185,7 @@ const Dashboard = () => {
              {documents.length === 0 && !isUploading ? (
               <div className="empty-state-small" style={{ padding: '48px 24px' }}>
                 <FileIcon size={32} style={{ opacity: 0.5, marginBottom: '8px' }} />
-                <p>No documents uploaded yet.</p>
+                <p>No documents uploaded yet</p>
                 <div style={{ fontSize: '0.85rem', marginTop: '4px' }}>Upload a document in the panel to get started.</div>
               </div>
             ) : (
@@ -194,7 +194,7 @@ const Dashboard = () => {
                     {documents.map(doc => (
                       <DocumentRow 
                         key={doc._id} 
-                        doc={doc} 
+                        document={doc} 
                         onDelete={promptDelete}
                         onRename={handleRename}
                       />

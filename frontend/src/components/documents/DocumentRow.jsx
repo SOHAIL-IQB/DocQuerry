@@ -1,24 +1,24 @@
 import React, { useState } from 'react';
 import { FileText, Edit2, Trash2, Check, X, Loader2 } from 'lucide-react';
 
-const DocumentRow = ({ doc, onDelete, onRename }) => {
+const DocumentRow = ({ document, onDelete, onRename }) => {
   const [isEditing, setIsEditing] = useState(false);
-  const [editName, setEditName] = useState(doc.fileName);
+  const [editName, setEditName] = useState(document?.fileName || '');
   const [isRenaming, setIsRenaming] = useState(false);
 
   // Fallbacks if formatting is lost
-  const fileSize = doc.fileSize || 0;
+  const fileSize = document?.fileSize || 0;
   const formattedSize = (fileSize / (1024 * 1024)).toFixed(2) + ' MB';
-  const formattedDate = new Date(doc.createdAt || Date.now()).toLocaleDateString();
-  const isProcessing = doc.status === 'processing';
+  const formattedDate = new Date(document?.createdAt || Date.now()).toLocaleDateString();
+  const isProcessing = document?.status === 'processing';
 
   const handleRenameSubmit = async () => {
-    if (!editName.trim() || editName === doc.fileName) {
+    if (!editName.trim() || editName === document.fileName) {
       setIsEditing(false);
       return;
     }
     setIsRenaming(true);
-    await onRename(doc._id, editName);
+    await onRename(document._id, editName);
     setIsRenaming(false);
     setIsEditing(false);
   };
@@ -28,7 +28,7 @@ const DocumentRow = ({ doc, onDelete, onRename }) => {
       handleRenameSubmit();
     } else if (e.key === 'Escape') {
       setIsEditing(false);
-      setEditName(doc.fileName);
+      setEditName(document.fileName);
     }
   };
 
@@ -53,12 +53,12 @@ const DocumentRow = ({ doc, onDelete, onRename }) => {
             <button className="icon-btn success" onClick={handleRenameSubmit} disabled={isRenaming}>
               {isRenaming ? <Loader2 size={16} className="spin" /> : <Check size={16} />}
             </button>
-            <button className="icon-btn cancel" onClick={() => { setIsEditing(false); setEditName(doc.fileName); }} disabled={isRenaming}>
+            <button className="icon-btn cancel" onClick={() => { setIsEditing(false); setEditName(document.fileName); }} disabled={isRenaming}>
               <X size={16} />
             </button>
           </div>
         ) : (
-          <div className="doc-title">{doc.fileName}</div>
+          <div className="doc-title">{document.fileName}</div>
         )}
         <div className="doc-meta">
           <span>{formattedSize}</span>
@@ -77,7 +77,7 @@ const DocumentRow = ({ doc, onDelete, onRename }) => {
             <button className="action-btn" onClick={() => setIsEditing(true)} title="Rename" disabled={isProcessing}>
               <Edit2 size={16} />
             </button>
-            <button className="action-btn delete" onClick={() => onDelete(doc)} title="Delete" disabled={isProcessing}>
+            <button className="action-btn delete" onClick={() => onDelete(document)} title="Delete" disabled={isProcessing}>
               <Trash2 size={16} />
             </button>
           </>
