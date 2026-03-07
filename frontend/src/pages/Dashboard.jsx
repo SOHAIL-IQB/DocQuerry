@@ -168,7 +168,7 @@ const Dashboard = () => {
           </div>
         </div>
 
-        <div className="metric-card storage-card" style={{ padding: 0 }}>
+        <div className="metric-card storage-card">
           <StorageMeter totalUsedBytes={totalBytes} />
         </div>
       </section>

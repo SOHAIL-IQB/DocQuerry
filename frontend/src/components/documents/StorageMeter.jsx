@@ -13,13 +13,13 @@ const StorageMeter = ({ totalUsedBytes, maxBytes = 50 * 1024 * 1024 }) => {
   else if (isWarning) fillClass = 'warning';
 
   return (
-    <div className="storage-meter">
-      <div className="metric-icon orange" style={{ marginBottom: '12px', width: '48px', height: '48px' }}>
-        <HardDrive size={20} />
+    <>
+      <div className="metric-icon orange">
+        <HardDrive size={24} />
       </div>
-      <div className="storage-wrapper" style={{ flex: 1, width: '100%' }}>
+      <div className="metric-info">
         <div className="storage-header">
-          <span className="storage-title">Storage Usage</span>
+          <span className="metric-label">Storage Usage</span>
           <span className="storage-text">{usedMB} MB / {maxMB} MB</span>
         </div>
         <div className="progress-bar-container">
@@ -29,7 +29,7 @@ const StorageMeter = ({ totalUsedBytes, maxBytes = 50 * 1024 * 1024 }) => {
           ></div>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 
