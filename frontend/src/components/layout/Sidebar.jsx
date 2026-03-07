@@ -205,6 +205,8 @@ const Sidebar = () => {
         </div>
       </nav>
 
+      <div className="sidebar-spacer" />
+
       <div className="sidebar-footer">
         <button className="nav-item" title="Settings">
           <Settings size={20} />
