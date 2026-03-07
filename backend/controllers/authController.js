@@ -26,7 +26,9 @@ const registerUser = async (req, res) => {
         success: true,
         data: {
           _id: user.id,
+          name: user.name,
           email: user.email,
+          avatar: user.avatar,
           totalStorageUsed: user.totalStorageUsed,
           token: generateToken(user._id),
         }
@@ -54,7 +56,9 @@ const loginUser = async (req, res) => {
         success: true,
         data: {
           _id: user.id,
+          name: user.name,
           email: user.email,
+          avatar: user.avatar,
           totalStorageUsed: user.totalStorageUsed,
           token: generateToken(user._id),
         }
@@ -78,7 +82,9 @@ const getMe = async (req, res) => {
         success: true,
         data: {
           _id: user.id,
+          name: user.name,
           email: user.email,
+          avatar: user.avatar,
           totalStorageUsed: user.totalStorageUsed,
         }
       });

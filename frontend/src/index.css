@@ -68,3 +68,14 @@ button {
   display: flex;
   flex-direction: column;
 }
+
+[data-theme="light"] {
+  --bg-app: #f8fafc;
+  --bg-surface: #ffffff;
+  --bg-element-hover: #e2e8f0;
+  --text-primary: #0f172a;
+  --text-secondary: #64748b;
+  --accent-color: #2563eb;
+  --accent-hover: #1d4ed8;
+  --border-color: rgba(0, 0, 0, 0.08);
+}

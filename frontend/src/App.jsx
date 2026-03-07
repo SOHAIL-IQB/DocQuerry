@@ -7,6 +7,7 @@ import ChatWorkspace from './pages/ChatWorkspace';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
+import Settings from './pages/Settings';
 
 // Temporary Mock Pages
 const Landing = () => <div style={{ padding: '40px', textAlign: 'center' }}><h1>DocuQuery AI</h1><p><a href="/login" style={{color: 'var(--accent-color)'}}>Go to Login</a></p></div>;
@@ -54,6 +55,7 @@ function App() {
             <Route element={<ProtectedRoute />}>
               <Route element={<AppLayout />}>
                 <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/settings" element={<Settings />} />
                 <Route path="/chat" element={<ChatWorkspace />} />
                 <Route path="/chat/:chatId" element={<ChatWorkspace />} />
               </Route>

@@ -208,10 +208,10 @@ const Sidebar = () => {
       <div className="sidebar-spacer" />
 
       <div className="sidebar-footer">
-        <button className="nav-item" title="Settings">
+        <NavLink to="/settings" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} title="Settings">
           <Settings size={20} />
           {!collapsed && <span>Settings</span>}
-        </button>
+        </NavLink>
         <button className="nav-item exit-item" onClick={logout} title="Logout">
           <LogOut size={20} />
           {!collapsed && <span>Logout</span>}
