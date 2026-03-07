@@ -80,6 +80,10 @@
     width: 100%;
 }
 
+.sidebar.collapsed .sidebar-nav {
+    align-items: center;
+}
+
 .nav-section {
     display: flex;
     flex-direction: column;
@@ -87,6 +91,10 @@
     /* Even spacing between navigation icons */
     overflow: hidden;
     width: 100%;
+}
+
+.sidebar.collapsed .nav-section {
+    align-items: center;
 }
 
 .nav-label {
