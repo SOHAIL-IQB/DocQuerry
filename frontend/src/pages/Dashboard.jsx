@@ -72,6 +72,7 @@ const Dashboard = () => {
 
     try {
       await api.delete(`/chat/${chatId}`);
+      window.dispatchEvent(new Event('chats-changed'));
     } catch (err) {
       console.error('Failed to delete chat', err);
       // Could trigger an error toast here or reload the dashboard
@@ -109,6 +110,7 @@ const Dashboard = () => {
     
     try {
       await api.patch(`/chat/${chatId}/rename`, { title: editTitle.trim() });
+      window.dispatchEvent(new Event('chats-changed'));
     } catch (err) {
       console.error('Failed to rename chat:', err);
       // Revert if API fails? In a robust app, yes.
