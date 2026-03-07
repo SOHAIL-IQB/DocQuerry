@@ -35,9 +35,16 @@ const getDashboardAnalytics = async (req, res) => {
 // @route   PUT /api/user/profile
 // @access  Private
 const updateProfile = async (req, res) => {
+  console.log(`\n[BACKEND] -> PATCH /api/users/profile invoked`);
+  console.log(`[BACKEND] -> Request Body:`, req.body);
+  console.log(`[BACKEND] -> Authenticated User ID:`, req.user?._id);
+
   try {
     const user = await User.findById(req.user._id);
-    if (!user) return res.status(404).json({ success: false, error: 'User not found' });
+    if (!user) {
+      console.warn(`[BACKEND] -> Profile Update Failed: User not found`);
+      return res.status(404).json({ success: false, error: 'User not found' });
+    }
 
     user.name = req.body.name || user.name;
     user.avatar = req.body.avatar || user.avatar;
@@ -63,12 +70,19 @@ const updateProfile = async (req, res) => {
 // @route   PUT /api/user/password
 // @access  Private
 const updatePassword = async (req, res) => {
+  console.log(`\n[BACKEND] -> POST /api/users/change-password invoked`);
+  console.log(`[BACKEND] -> Request Body Present:`, !!req.body);
+  console.log(`[BACKEND] -> Authenticated User ID:`, req.user?._id);
+
   try {
     const { currentPassword, newPassword } = req.body;
     // Explicitly select password field to check it
     const user = await User.findById(req.user._id).select('+password');
 
-    if (!user) return res.status(404).json({ success: false, error: 'User not found' });
+    if (!user) {
+      console.warn(`[BACKEND] -> Password Update Failed: User not found`);
+      return res.status(404).json({ success: false, error: 'User not found' });
+    }
 
     // Check current password
     if (!(await user.matchPassword(currentPassword))) {
