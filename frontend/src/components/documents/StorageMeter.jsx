@@ -17,16 +17,20 @@ const StorageMeter = ({ totalUsedBytes, maxBytes = 50 * 1024 * 1024 }) => {
       <div className="metric-icon orange">
         <HardDrive size={24} />
       </div>
-      <div className="metric-info">
-        <div className="storage-header">
+      <div className="metric-info" style={{ height: '56px', justifyContent: 'center', gap: '8px' }}>
+        <div className="storage-header" style={{ marginBottom: 'auto', paddingTop: '4px' }}>
           <span className="metric-label">Storage Usage</span>
-          <span className="storage-text">{usedMB} MB / {maxMB} MB</span>
         </div>
-        <div className="progress-bar-container">
-          <div 
-            className={`progress-bar-fill ${fillClass}`} 
-            style={{ width: `${percent}%` }}
-          ></div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', paddingBottom: '4px' }}>
+          <div className="progress-bar-container" style={{ margin: 0, flex: 1 }}>
+            <div 
+              className={`progress-bar-fill ${fillClass}`} 
+              style={{ width: `${percent}%` }}
+            ></div>
+          </div>
+          <span className="storage-text" style={{ fontWeight: 500, color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>
+            {usedMB} / {maxMB} MB
+          </span>
         </div>
       </div>
     </>
