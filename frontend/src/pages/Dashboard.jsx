@@ -181,7 +181,7 @@ const Dashboard = () => {
             <h3>Document Library</h3>
             <span className="doc-count" style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{documents.length} File{documents.length !== 1 ? 's' : ''}</span>
           </div>
-          <div className="panel-body" style={{ padding: 0 }}>
+          <div className="panel-body">
              {documents.length === 0 && !isUploading ? (
               <div className="empty-state-small" style={{ padding: '48px 24px' }}>
                 <FileIcon size={32} style={{ opacity: 0.5, marginBottom: '8px' }} />
@@ -189,8 +189,8 @@ const Dashboard = () => {
                 <div style={{ fontSize: '0.85rem', marginTop: '4px' }}>Upload a document in the panel to get started.</div>
               </div>
             ) : (
-              <div className="documents-list-section" style={{ padding: '16px' }}>
-                 <div className="docs-grid" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div className="documents-list-section">
+                 <div className="docs-grid">
                     {documents.map(doc => (
                       <DocumentRow 
                         key={doc._id} 
@@ -212,8 +212,8 @@ const Dashboard = () => {
           </div>
           <div className="panel-body actions-body">
             
-            <div style={{ marginBottom: '16px' }}>
-               <h4 style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>Add Knowledge</h4>
+            <div className="quick-action-block">
+               <h4 className="section-subtitle">Add Knowledge to Workspace</h4>
                <UploadZone 
                  onUpload={handleUpload} 
                  isUploading={isUploading} 
@@ -226,15 +226,18 @@ const Dashboard = () => {
                )}
             </div>
 
-            <Link to="/chat" className="action-card" style={{ marginTop: 'auto' }}>
-              <div className="action-icon" style={{ backgroundColor: 'rgba(59, 130, 246, 0.1)', color: 'var(--accent-color)' }}>
-                <MessageSquare size={20} />
-              </div>
-              <div className="action-text">
-                <h4>New AI Chat</h4>
-                <p>Chat with your documents</p>
-              </div>
-            </Link>
+            <div className="quick-action-block" style={{ marginTop: 'auto' }}>
+               <h4 className="section-subtitle">Start Conversation</h4>
+               <Link to="/chat" className="action-card">
+                 <div className="action-icon">
+                   <MessageSquare size={20} />
+                 </div>
+                 <div className="action-text">
+                   <h4>New AI Chat</h4>
+                   <p>Query your document library</p>
+                 </div>
+               </Link>
+            </div>
           </div>
         </div>
       </div>

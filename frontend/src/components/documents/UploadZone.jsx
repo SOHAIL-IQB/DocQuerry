@@ -86,7 +86,9 @@ const UploadZone = ({ onUpload, isUploading, disabled }) => {
           </div>
         ) : (
           <div className="upload-content text-center">
-            <UploadCloud size={40} className="upload-icon" />
+            <div className="upload-icon-wrapper">
+              <UploadCloud size={28} />
+            </div>
             <h3>Click or drag to upload</h3>
             <p className="upload-subtext">Supports PDF, DOCX, TXT (Max 10MB)</p>
           </div>
