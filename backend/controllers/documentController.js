@@ -17,7 +17,7 @@ const uploadDocument = async (req, res) => {
 
     // 1. Create document record with status "Processing"
     const newDoc = await Document.create({
-      userId: req.user._id,
+      userId: req.user.id,
       fileName: req.file.originalname,
       fileSize: req.file.size,
       status: 'Processing'
@@ -35,7 +35,7 @@ const uploadDocument = async (req, res) => {
         const embedding = await generateEmbedding(chunkTextStr);
         return {
           documentId: newDoc._id,
-          userId: req.user._id,
+          userId: req.user.id,
           text: chunkTextStr,
           embedding: embedding,
           chunkIndex: index
@@ -78,10 +78,23 @@ const uploadDocument = async (req, res) => {
 // @access  Private
 const getDocuments = async (req, res) => {
   try {
-    const documents = await Document.find({ userId: req.user._id }).sort({ uploadDate: -1 });
-    res.json({ success: true, data: documents });
+    const documents = await Document.find({ 
+      userId: req.user.id 
+    }).sort({ createdAt: -1 });
+    
+    console.log("User ID:", req.user.id);
+    console.log("Documents found:", documents.length);
+
+    res.json({ 
+      success: true, 
+      data: documents 
+    });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    console.error("Fetch Documents Error:", error);
+    res.status(500).json({ 
+      success: false, 
+      error: error.message 
+    });
   }
 };
 

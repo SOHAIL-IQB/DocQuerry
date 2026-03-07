@@ -19,7 +19,7 @@ const documentSchema = new mongoose.Schema({
     enum: ['Processing', 'Ready', 'Failed'],
     default: 'Processing'
   },
-  uploadDate: {
+  createdAt: {
     type: Date,
     default: Date.now
   }
