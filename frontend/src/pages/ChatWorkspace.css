@@ -1,10 +1,10 @@
 .chat-layout {
     display: flex;
-    flex: 1;
-    overflow: hidden;
+    flex-direction: column;
+    height: calc(100vh - 48px);
+    width: 100%;
     max-width: 1200px;
     margin: 0 auto;
-    width: 100%;
     position: relative;
     gap: 24px;
 }

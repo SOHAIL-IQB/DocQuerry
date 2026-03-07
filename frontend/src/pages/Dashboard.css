@@ -66,11 +66,11 @@
 .metric-card {
     background-color: var(--bg-surface);
     border: 1px solid var(--border-color);
-    border-radius: 16px;
-    padding: 24px 28px;
+    border-radius: 12px;
+    padding: 24px;
     display: flex;
     align-items: center;
-    gap: 24px;
+    gap: 20px;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
@@ -163,15 +163,17 @@
 /* Lower Split Layout */
 .dashboard-content-grid {
     display: grid;
-    grid-template-columns: 1.8fr 1fr;
-    gap: 32px;
+    grid-template-columns: 2fr 1fr;
+    gap: 24px;
 }
 
 .dashboard-panel {
     background-color: var(--bg-surface);
     border: 1px solid var(--border-color);
-    border-radius: 16px;
+    border-radius: 12px;
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
 }
 
 .panel-header {
@@ -445,7 +447,7 @@
     padding: 16px;
     background-color: var(--bg-app);
     border: 1px solid var(--border-color);
-    border-radius: 10px;
+    border-radius: 8px;
     gap: 16px;
     transition: all 0.2s;
 }
