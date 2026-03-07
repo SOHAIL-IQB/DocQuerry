@@ -9,8 +9,8 @@ const {
 const { protect } = require('../middleware/authMiddleware');
 
 router.get('/analytics', protect, getDashboardAnalytics);
-router.put('/profile', protect, updateProfile);
-router.put('/password', protect, updatePassword);
+router.patch('/profile', protect, updateProfile);
+router.post('/change-password', protect, updatePassword);
 router.delete('/account', protect, deleteAccount);
 
 module.exports = router;

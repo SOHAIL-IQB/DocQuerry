@@ -51,7 +51,7 @@ const Settings = () => {
     setProfileMessage({ text: '', type: '' });
 
     try {
-      const { data } = await api.put('/user/profile', { name, avatar });
+      const { data } = await api.patch('/users/profile', { name, avatar });
       if (data.success) {
         // Update local stored user while keeping the token intact
         const token = localStorage.getItem('token');
@@ -82,7 +82,7 @@ const Settings = () => {
 
     setIsSavingPassword(true);
     try {
-      const { data } = await api.put('/user/password', { currentPassword, newPassword });
+      const { data } = await api.post('/users/change-password', { currentPassword, newPassword });
       if (data.success) {
         setPasswordMessage({ text: 'Password changed successfully.', type: 'success' });
         setCurrentPassword('');
@@ -103,7 +103,7 @@ const Settings = () => {
   const handleDeleteAccount = async () => {
     setIsDeleting(true);
     try {
-      await api.delete('/user/account');
+      await api.delete('/users/account');
       logout(); // Force logout redirects to login
     } catch (error) {
       console.error('Failed to delete account', error);
@@ -167,8 +167,17 @@ const Settings = () => {
 
               <div className="form-actions">
                 <button type="submit" className="btn-primary" disabled={isSavingProfile || !name.trim()}>
-                  {isSavingProfile ? <Loader2 className="spin" size={18} /> : <Save size={18} />}
-                  Save Profile
+                  {isSavingProfile ? (
+                    <>
+                      <Loader2 className="spin" size={18} />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Save size={18} />
+                      Save Profile
+                    </>
+                  )}
                 </button>
                 {profileMessage.text && (
                   <span className={`status-msg ${profileMessage.type}`}>{profileMessage.text}</span>
@@ -210,7 +219,14 @@ const Settings = () => {
               
               <div className="form-actions">
                 <button type="submit" className="btn-primary outline" disabled={isSavingPassword || !currentPassword || !newPassword || !confirmPassword}>
-                  {isSavingPassword ? <Loader2 className="spin" size={18} /> : 'Update Password'}
+                  {isSavingPassword ? (
+                    <>
+                      <Loader2 className="spin" size={18} />
+                      Updating...
+                    </>
+                  ) : (
+                    'Update Password'
+                  )}
                 </button>
                 {passwordMessage.text && (
                   <span className={`status-msg ${passwordMessage.type}`}>{passwordMessage.text}</span>

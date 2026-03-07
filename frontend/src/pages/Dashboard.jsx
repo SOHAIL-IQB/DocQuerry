@@ -28,7 +28,7 @@ const Dashboard = () => {
       try {
         setLoading(true);
         const [analyticsRes, docsRes] = await Promise.all([
-          api.get('/user/analytics'),
+          api.get('/users/analytics'),
           api.get('/documents')
         ]);
         
