@@ -17,20 +17,22 @@ const StorageMeter = ({ totalUsedBytes, maxBytes = 50 * 1024 * 1024 }) => {
       <div className="metric-icon orange">
         <HardDrive size={24} />
       </div>
-      <div className="metric-info" style={{ height: '56px', justifyContent: 'center', gap: '8px' }}>
-        <div className="storage-header" style={{ marginBottom: 'auto', paddingTop: '4px' }}>
+      <div className="metric-info" style={{ height: '56px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '2px 0' }}>
+        <div className="storage-header">
           <span className="metric-label">Storage Usage</span>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', paddingBottom: '4px' }}>
-          <div className="progress-bar-container" style={{ margin: 0, flex: 1 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <span className="storage-text" style={{ fontWeight: 500, color: 'var(--text-primary)', fontSize: '0.8rem', lineHeight: 1 }}>
+              {usedMB} / {maxMB} MB
+            </span>
+          </div>
+          <div className="progress-bar-container" style={{ margin: 0, width: '100%' }}>
             <div 
               className={`progress-bar-fill ${fillClass}`} 
               style={{ width: `${percent}%` }}
             ></div>
           </div>
-          <span className="storage-text" style={{ fontWeight: 500, color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>
-            {usedMB} / {maxMB} MB
-          </span>
         </div>
       </div>
     </>
