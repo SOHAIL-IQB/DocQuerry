@@ -127,10 +127,57 @@
     line-height: 1;
 }
 
+.storage-meter {
+    width: 100%;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 12px;
+}
+
+.storage-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.storage-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
 .storage-info {
     gap: 8px;
 }
 
+.progress-bar-container {
+    width: 100%;
+    height: 8px;
+    background-color: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    background-color: #10B981;
+    border-radius: 4px;
+    transition: width 0.5s ease-out;
+}
+
+.progress-bar-fill.warning {
+    background-color: #F59E0B;
+}
+
+.progress-bar-fill.danger {
+    background-color: #EF4444;
+}
+
+/* Legacy overrides for older classes if still present */
 .storage-bar-wrapper {
     height: 6px;
     background-color: rgba(255, 255, 255, 0.05);
