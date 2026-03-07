@@ -53,6 +53,12 @@ const sendMessage = async (req, res) => {
       content: question
     });
 
+    // 4.5 Auto-generate title for fresh chats
+    if (chat.title === 'New Chat' || chat.title === 'New Conversation') {
+      chat.title = question.substring(0, 40) + (question.length > 40 ? '...' : '');
+      await chat.save();
+    }
+
     // 5. Call RAG logic safely
     let aiResponse;
     try {
@@ -172,10 +178,50 @@ const getAllChats = async (req, res) => {
   }
 };
 
+// @desc    Rename a chat
+// @route   PATCH /api/chat/:chatId/rename
+// @access  Private
+const renameChat = async (req, res) => {
+  try {
+    const chatId = req.params.chatId;
+    const { title } = req.body;
+
+    if (!title || !title.trim()) {
+      return res.status(400).json({ success: false, error: 'Title is required' });
+    }
+
+    // 1. Fetch the chat
+    const chat = await Chat.findById(chatId);
+
+    if (!chat) {
+      return res.status(404).json({ success: false, error: 'Chat not found' });
+    }
+
+    // 2. Validate ownership safely
+    if (chat.userId.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ success: false, error: 'Not authorized to configure this chat' });
+    }
+
+    // 3. Update the title
+    chat.title = title.trim();
+    await chat.save();
+
+    res.status(200).json({
+      success: true,
+      data: chat
+    });
+
+  } catch (error) {
+    console.error('Error in renameChat:', error);
+    res.status(500).json({ success: false, error: 'Server error' });
+  }
+};
+
 module.exports = {
   createChat,
   sendMessage,
   getAllChats,
   getChatHistory,
-  deleteChat
+  deleteChat,
+  renameChat
 };

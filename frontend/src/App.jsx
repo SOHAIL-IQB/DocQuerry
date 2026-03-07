@@ -6,7 +6,6 @@ import AppLayout from './components/layout/AppLayout';
 import ChatWorkspace from './pages/ChatWorkspace';
 import Login from './pages/Login';
 import Register from './pages/Register';
-import Documents from './pages/Documents';
 import Dashboard from './pages/Dashboard';
 
 // Temporary Mock Pages
@@ -55,7 +54,6 @@ function App() {
             <Route element={<ProtectedRoute />}>
               <Route element={<AppLayout />}>
                 <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/documents" element={<Documents />} />
                 <Route path="/chat" element={<ChatWorkspace />} />
                 <Route path="/chat/:chatId" element={<ChatWorkspace />} />
               </Route>

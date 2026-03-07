@@ -369,3 +369,221 @@
     font-size: 0.85rem;
     color: var(--text-secondary);
 }
+
+/* ------------------------------------- */
+/* Embedded Document Styles (UploadZone) */
+/* ------------------------------------- */
+.upload-zone-wrapper {
+    width: 100%;
+}
+
+.upload-zone {
+    border: 2px dashed rgba(255, 255, 255, 0.15);
+    border-radius: 12px;
+    padding: 32px 20px;
+    background-color: rgba(255, 255, 255, 0.02);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 140px;
+}
+
+.upload-zone:hover {
+    border-color: var(--accent-color);
+    background-color: rgba(59, 130, 246, 0.05);
+}
+
+.upload-zone.dragging {
+    border-color: var(--accent-color);
+    background-color: rgba(59, 130, 246, 0.1);
+    transform: scale(1.02);
+}
+
+.upload-zone.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    border-color: rgba(255, 255, 255, 0.05);
+}
+
+.upload-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.upload-icon {
+    color: var(--accent-color);
+    margin-bottom: 4px;
+}
+
+.upload-content h3 {
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.upload-subtext {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.text-center {
+    text-align: center;
+}
+
+/* -------------------------------------- */
+/* Embedded Document Styles (DocumentRow) */
+/* -------------------------------------- */
+
+.document-row {
+    display: flex;
+    align-items: center;
+    padding: 16px;
+    background-color: var(--bg-app);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    gap: 16px;
+    transition: all 0.2s;
+}
+
+.document-row:hover {
+    border-color: rgba(255, 255, 255, 0.15);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.doc-icon-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    width: 48px;
+    height: 48px;
+    flex-shrink: 0;
+}
+
+.doc-icon.ready {
+    color: #10B981;
+}
+
+.doc-icon.processing {
+    color: #F59E0B;
+}
+
+.doc-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+.doc-title {
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 0.95rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.doc-title:hover {
+    color: var(--accent-color);
+}
+
+.doc-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.dot-separator {
+    opacity: 0.5;
+    font-size: 0.6rem;
+}
+
+.doc-status {
+    font-weight: 500;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+}
+
+.status-ready {
+    background-color: rgba(16, 185, 129, 0.1);
+    color: #10B981;
+}
+
+.status-processing {
+    background-color: rgba(245, 158, 11, 0.1);
+    color: #F59E0B;
+}
+
+.doc-actions {
+    display: flex;
+    gap: 8px;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.document-row:hover .doc-actions {
+    opacity: 1;
+}
+
+.action-btn {
+    background: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.action-btn:hover:not(:disabled) {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: var(--text-primary);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.action-btn.delete:hover:not(:disabled) {
+    background-color: rgba(239, 68, 68, 0.1);
+    color: #EF4444;
+    border-color: rgba(239, 68, 68, 0.2);
+}
+
+.action-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.doc-rename-form {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.rename-input {
+    background-color: var(--bg-surface);
+    border: 1px solid var(--accent-color);
+    color: var(--text-primary);
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.95rem;
+    flex: 1;
+}
+
+.rename-input:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}

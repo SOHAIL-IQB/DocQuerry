@@ -2,41 +2,42 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
-import { Layers, FileText, MessageSquare, HardDrive, ArrowRight, Loader2, Bot, Trash2, Edit2, Check, X } from 'lucide-react';
+import { Layers, FileText, MessageSquare, HardDrive, Loader2, FileText as FileIcon, AlertCircle } from 'lucide-react';
 import ConfirmationModal from '../components/common/ConfirmationModal';
+import UploadZone from '../components/documents/UploadZone';
+import DocumentRow from '../components/documents/DocumentRow';
+import StorageMeter from '../components/documents/StorageMeter';
 import './Dashboard.css';
 
 const Dashboard = () => {
   const { user } = useAuth();
   const [analytics, setAnalytics] = useState(null);
-  const [recentChats, setRecentChats] = useState([]);
+  const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(true);
   
-  // Modal State
-  const [modalOpen, setModalOpen] = useState(false);
-  const [chatToDelete, setChatToDelete] = useState(null);
+  // Document Upload State
+  const [isUploading, setIsUploading] = useState(false);
+  const [error, setError] = useState('');
 
-  // Rename State
-  const [editingChatId, setEditingChatId] = useState(null);
-  const [editTitle, setEditTitle] = useState('');
+  // Modal State for Documents
+  const [modalOpen, setModalOpen] = useState(false);
+  const [docToDelete, setDocToDelete] = useState(null);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
         setLoading(true);
-        // Fire parallel requests for speed
-        const [analyticsRes, chatsRes] = await Promise.all([
+        const [analyticsRes, docsRes] = await Promise.all([
           api.get('/user/analytics'),
-          api.get('/chat')
+          api.get('/documents')
         ]);
         
         if (analyticsRes.data.success) {
           setAnalytics(analyticsRes.data.data);
         }
         
-        if (chatsRes.data.success) {
-           // Allow discovery of all chats
-          setRecentChats(chatsRes.data.data);
+        if (docsRes.data.success) {
+          setDocuments(docsRes.data.data);
         }
 
       } catch (err) {
@@ -49,71 +50,75 @@ const Dashboard = () => {
     fetchDashboardData();
   }, []);
 
-  const promptDelete = (e, chat) => {
-    e.preventDefault(); // Prevent navigating to the chat
-    e.stopPropagation();
-    setChatToDelete(chat);
+  const totalBytes = documents.reduce((acc, doc) => acc + (doc.fileSize || 0), 0);
+  const isStorageExceeded = totalBytes >= 50 * 1024 * 1024; // 50MB
+
+  const handleUpload = async (file) => {
+    setIsUploading(true);
+    setError('');
+    
+    const formData = new FormData();
+    formData.append('document', file);
+
+    try {
+      const { data } = await api.post('/documents/upload', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      if (data.success) {
+        setDocuments(prev => [data.data, ...prev]);
+        setAnalytics(prev => ({
+          ...prev,
+          totalDocuments: (prev?.totalDocuments || 0) + 1,
+          storageUsedBytes: (prev?.storageUsedBytes || 0) + (data.data.fileSize || 0)
+        }));
+      }
+    } catch (err) {
+      setError(err.response?.data?.error || 'Upload failed.');
+      console.error(err);
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleRename = async (id, newName) => {
+    try {
+      const { data } = await api.put(`/documents/${id}`, { fileName: newName });
+      if (data.success) {
+        setDocuments(prev => prev.map(doc => doc._id === id ? { ...doc, fileName: data.data.fileName } : doc));
+      }
+    } catch (err) {
+      setError('Failed to rename document.');
+    }
+  };
+
+  const promptDelete = (doc) => {
+    setDocToDelete(doc);
     setModalOpen(true);
   };
 
   const confirmDelete = async () => {
-    if (!chatToDelete) return;
-    const chatId = chatToDelete._id;
+    if (!docToDelete) return;
+    const docId = docToDelete._id;
+    const deletedSize = docToDelete.fileSize || 0;
     
     // Optimistic UI updates
-    setRecentChats(prev => prev.filter(c => c._id !== chatId));
+    setDocuments(prev => prev.filter(d => d._id !== docId));
     setAnalytics(prev => ({
       ...prev,
-      totalChats: Math.max(0, prev.totalChats - 1)
+      totalDocuments: Math.max(0, (prev?.totalDocuments || 0) - 1),
+      storageUsedBytes: Math.max(0, (prev?.storageUsedBytes || 0) - deletedSize)
     }));
     
     setModalOpen(false);
-    setChatToDelete(null);
+    setDocToDelete(null);
 
     try {
-      await api.delete(`/chat/${chatId}`);
-      window.dispatchEvent(new Event('chats-changed'));
+       await api.delete(`/documents/${docId}`);
     } catch (err) {
-      console.error('Failed to delete chat', err);
-      // Could trigger an error toast here or reload the dashboard
-    }
-  };
-
-  const startRename = (e, chat) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setEditingChatId(chat._id);
-    setEditTitle(chat.title || 'Conversation');
-  };
-
-  const cancelRename = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setEditingChatId(null);
-    setEditTitle('');
-  };
-
-  const saveRename = async (e, chatId) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    if (!editTitle.trim()) {
-      cancelRename(e);
-      return;
-    }
-
-    // Optimistic UI update
-    setRecentChats(prev => prev.map(c => 
-      c._id === chatId ? { ...c, title: editTitle.trim() } : c
-    ));
-    setEditingChatId(null);
-    
-    try {
-      await api.patch(`/chat/${chatId}/rename`, { title: editTitle.trim() });
-      window.dispatchEvent(new Event('chats-changed'));
-    } catch (err) {
-      console.error('Failed to rename chat:', err);
-      // Revert if API fails? In a robust app, yes.
+      console.error('Failed to delete document', err);
+      setError('Failed to delete document. Please refresh.');
     }
   };
 
@@ -126,11 +131,6 @@ const Dashboard = () => {
     );
   }
 
-  // Formatting helpers
-  const storageUsedMB = analytics ? (analytics.storageUsedBytes / (1024 * 1024)).toFixed(2) : 0;
-  const storageLimitMB = 50;
-  const storagePercent = Math.min((analytics?.storageUsedBytes / (50 * 1024 * 1024)) * 100, 100) || 0;
-
   return (
     <div className="dashboard-container fade-in">
       <header className="dashboard-header">
@@ -138,10 +138,13 @@ const Dashboard = () => {
           <h1>Welcome back, {user?.name || 'User'}</h1>
           <p>Here's an overview of your AI knowledge workspace today.</p>
         </div>
-        <Link to="/chat" className="btn-primary">
-          <MessageSquare size={16} /> New Chat
-        </Link>
       </header>
+      
+      {error && (
+        <div className="global-error fade-in" style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)', color: '#f87171', padding: '12px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.85rem' }}>
+          <AlertCircle size={16} /> <span>{error}</span>
+        </div>
+      )}
 
       {/* Analytics Main Widgets */}
       <section className="metrics-grid">
@@ -165,94 +168,38 @@ const Dashboard = () => {
           </div>
         </div>
 
-        <div className="metric-card storage-card">
-          <div className="metric-icon orange">
-            <HardDrive size={24} />
-          </div>
-          <div className="metric-info storage-info">
-            <span className="metric-label">Storage Used (50MB Limit)</span>
-            <div className="storage-bar-wrapper">
-              <div 
-                className={`storage-fill ${storagePercent > 90 ? 'danger' : storagePercent > 75 ? 'warning' : ''}`}
-                style={{ width: `${storagePercent}%` }}
-              />
-            </div>
-             <span className="storage-text">{storageUsedMB} MB / {storageLimitMB} MB</span>
-          </div>
+        <div className="metric-card storage-card" style={{ padding: 0 }}>
+          <StorageMeter totalUsedBytes={totalBytes} />
         </div>
       </section>
 
       {/* Main Layout Area */}
       <div className="dashboard-content-grid">
-        {/* Recent Chats Panel */}
+        {/* Document Library Panel */}
         <div className="dashboard-panel">
-          <div className="panel-header">
-            <h3>Recent Conversations</h3>
+          <div className="panel-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <h3>Document Library</h3>
+            <span className="doc-count" style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{documents.length} File{documents.length !== 1 ? 's' : ''}</span>
           </div>
-          <div className="panel-body">
-            {recentChats.length === 0 ? (
-              <div className="empty-state-small">
-                <Bot size={24} />
-                <p>No conversations yet.</p>
-                <Link to="/chat" className="text-accent">Start a new chat →</Link>
+          <div className="panel-body" style={{ padding: 0 }}>
+             {documents.length === 0 && !isUploading ? (
+              <div className="empty-state-small" style={{ padding: '48px 24px' }}>
+                <FileIcon size={32} style={{ opacity: 0.5, marginBottom: '8px' }} />
+                <p>No documents uploaded yet.</p>
+                <div style={{ fontSize: '0.85rem', marginTop: '4px' }}>Upload a document in the panel to get started.</div>
               </div>
             ) : (
-              <div className="recent-list" style={{ maxHeight: '400px', overflowY: 'auto', paddingRight: '8px' }}>
-                {recentChats.map(chat => (
-                  <div key={chat._id} className="recent-chat-row-container" style={{ position: 'relative' }}>
-                    <Link to={`/chat/${chat._id}`} className="recent-chat-row">
-                      <div className="chat-row-left">
-                        <MessageSquare size={16} className="text-secondary" />
-                        {editingChatId === chat._id ? (
-                          <div className="doc-rename-form" onClick={e => e.preventDefault()}>
-                            <input 
-                              type="text"
-                              className="rename-input"
-                              value={editTitle}
-                              onChange={e => setEditTitle(e.target.value)}
-                              onClick={e => e.preventDefault()}
-                              autoFocus
-                              onKeyDown={e => {
-                                if (e.key === 'Enter') saveRename(e, chat._id);
-                                if (e.key === 'Escape') cancelRename(e);
-                              }}
-                            />
-                            <button className="icon-btn success" onClick={(e) => saveRename(e, chat._id)} title="Save">
-                              <Check size={14} />
-                            </button>
-                            <button className="icon-btn cancel" onClick={cancelRename} title="Cancel">
-                              <X size={14} />
-                            </button>
-                          </div>
-                        ) : (
-                          <span className="chat-title">{chat.title || 'Conversation'}</span>
-                        )}
-                      </div>
-                      <div className="chat-row-right">
-                        <span className="chat-date">{new Date(chat.updatedAt).toLocaleDateString()}</span>
-                        {editingChatId !== chat._id && (
-                          <div style={{ display: 'flex', gap: '4px' }}>
-                            <button 
-                              className="rename-chat-btn" 
-                              onClick={(e) => startRename(e, chat)}
-                              title="Rename Chat"
-                            >
-                              <Edit2 size={16} />
-                            </button>
-                            <button 
-                              className="delete-chat-btn" 
-                              onClick={(e) => promptDelete(e, chat)}
-                              title="Delete Chat"
-                            >
-                              <Trash2 size={16} />
-                            </button>
-                          </div>
-                        )}
-                        <ArrowRight size={14} className="hover-arrow" />
-                      </div>
-                    </Link>
-                  </div>
-                ))}
+              <div className="documents-list-section" style={{ padding: '16px' }}>
+                 <div className="docs-grid" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {documents.map(doc => (
+                      <DocumentRow 
+                        key={doc._id} 
+                        doc={doc} 
+                        onDelete={promptDelete}
+                        onRename={handleRename}
+                      />
+                    ))}
+                 </div>
               </div>
             )}
           </div>
@@ -264,23 +211,28 @@ const Dashboard = () => {
             <h3>Quick Actions</h3>
           </div>
           <div className="panel-body actions-body">
-            <Link to="/documents" className="action-card">
-              <div className="action-icon">
-                <FileText size={20} />
-              </div>
-              <div className="action-text">
-                <h4>Upload Document</h4>
-                <p>Add context for the AI</p>
-              </div>
-            </Link>
             
-            <Link to="/chat" className="action-card">
-              <div className="action-icon">
+            <div style={{ marginBottom: '16px' }}>
+               <h4 style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>Add Knowledge</h4>
+               <UploadZone 
+                 onUpload={handleUpload} 
+                 isUploading={isUploading} 
+                 disabled={isStorageExceeded} 
+               />
+               {isStorageExceeded && (
+                 <div className="storage-warning" style={{ fontSize: '0.75rem', color: '#f59e0b', marginTop: '8px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                   <AlertCircle size={12} /> Storage limit reached.
+                 </div>
+               )}
+            </div>
+
+            <Link to="/chat" className="action-card" style={{ marginTop: 'auto' }}>
+              <div className="action-icon" style={{ backgroundColor: 'rgba(59, 130, 246, 0.1)', color: 'var(--accent-color)' }}>
                 <MessageSquare size={20} />
               </div>
               <div className="action-text">
-                <h4>Ask a Question</h4>
-                <p>Chat with your knowledge</p>
+                <h4>New AI Chat</h4>
+                <p>Chat with your documents</p>
               </div>
             </Link>
           </div>
@@ -289,9 +241,9 @@ const Dashboard = () => {
 
       <ConfirmationModal 
         isOpen={modalOpen}
-        title="Delete Conversation"
-        message={`Are you sure you want to delete "${chatToDelete?.title}"? This conversation history cannot be recovered.`}
-        confirmText="Delete Chat"
+        title="Delete Document"
+        message={`Are you sure you want to delete "${docToDelete?.fileName}"? This action cannot be undone and will permanently remove it from the chat context.`}
+        confirmText="Delete Document"
         isDestructive={true}
         onCancel={() => setModalOpen(false)}
         onConfirm={confirmDelete}

@@ -37,6 +37,9 @@
     background: linear-gradient(135deg, var(--accent-hover), var(--accent-color));
     border-radius: 6px;
     flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .sidebar-header h2 {
@@ -151,25 +154,28 @@
 .new-chat-btn-small {
     display: flex;
     align-items: center;
-    gap: 6px;
-    background-color: transparent;
-    border: 1px dashed rgba(255, 255, 255, 0.2);
-    color: var(--text-secondary);
-    padding: 10px 12px;
-    border-radius: 6px;
-    font-size: 0.85rem;
-    cursor: pointer;
-    transition: all 0.2s;
-    margin-right: 8px;
-    flex-shrink: 0;
     justify-content: center;
+    gap: 6px;
+    background-color: var(--accent-color);
+    color: white;
+    padding: 10px 12px;
+    border-radius: 8px;
+    font-size: 0.9rem;
     font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.1s;
+    border: none;
+    margin-bottom: 8px;
+    width: 100%;
+    box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
 }
 
 .new-chat-btn-small:hover {
-    border-color: var(--accent-color);
-    color: var(--text-primary);
-    background-color: rgba(59, 130, 246, 0.05);
+    background-color: var(--accent-hover);
+}
+
+.new-chat-btn-small:active {
+    transform: scale(0.98);
 }
 
 .sidebar-chat-list {

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink, Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, FileText, MessageSquare, Settings, LogOut, PanelLeftClose, PanelLeftOpen, Plus, Edit2, Trash2, Check, X } from 'lucide-react';
+import { LayoutDashboard, MessageSquare, Settings, LogOut, PanelLeftClose, PanelLeftOpen, Plus, Edit2, Trash2, Check, X, Bot } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import ConfirmationModal from '../common/ConfirmationModal';
 import api from '../../services/api';
@@ -122,7 +122,9 @@ const Sidebar = () => {
   return (
     <aside className={`sidebar ${collapsed ? 'collapsed' : ''}`}>
       <div className="sidebar-header">
-        {!collapsed && <div className="logo-placeholder" title="DocuQuery AI"></div>}
+        <div className="logo-placeholder" title="DocuQuery AI">
+          <Bot size={18} color="white" />
+        </div>
         {!collapsed && <h2>DocuQuery AI</h2>}
         <button className="toggle-btn" onClick={() => setCollapsed(!collapsed)} title={collapsed ? "Expand Sidebar" : "Collapse Sidebar"}>
           {collapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
@@ -136,11 +138,6 @@ const Sidebar = () => {
           <NavLink to="/dashboard" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} title="Dashboard">
             <LayoutDashboard size={20} />
             {!collapsed && <span>Dashboard</span>}
-          </NavLink>
-          
-          <NavLink to="/documents" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} title="Documents">
-            <FileText size={20} />
-            {!collapsed && <span>Documents</span>}
           </NavLink>
           
           <NavLink to="/chat" className={`nav-item ${isChatActive ? 'active' : ''}`} title="Chat">

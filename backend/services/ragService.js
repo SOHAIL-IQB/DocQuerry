@@ -83,8 +83,14 @@ Instructions:
 Answer strictly using the context above.
 If the answer is not found, respond with:
 "The uploaded documents do not contain this information."
-Do not guess.
-Do not fabricate.`;
+Do not guess or fabricate information.
+
+Formatting Rules:
+- Use numbered lists for multiple questions or steps
+- Separate the question and answer clearly if addressing multiple parts
+- Avoid long single paragraphs; break text into readable chunks
+- Structure the output clearly using standard markdown formatting for UI readability
+- Do not include the original question in the answer unless necessary for context`;
 
     // 5. Invoke Gemini LLM
     const model = genAI.getGenerativeModel({ 
