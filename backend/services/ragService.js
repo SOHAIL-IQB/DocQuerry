@@ -13,19 +13,10 @@ const { genAI, generateEmbedding } = require('../utils/gemini');
  */
 const retrieveRelevantChunks = async (userId, queryEmbedding, documentIds = []) => {
   try {
-    const filterCondition = {
+    // ONLY push userId to the Vector Search Native filter, as documentId is not indexed in Atlas
+    const baseFilter = {
       userId: new mongoose.Types.ObjectId(userId)
     };
-    
-    // Apply array-based document filtering safely
-    if (documentIds && Array.isArray(documentIds) && documentIds.length > 0) {
-      const validIds = documentIds.filter(id => mongoose.Types.ObjectId.isValid(id));
-      if (validIds.length > 0) {
-        filterCondition.documentId = { 
-          $in: validIds.map(id => new mongoose.Types.ObjectId(id)) 
-        };
-      }
-    }
 
     const pipeline = [
       {
@@ -34,10 +25,27 @@ const retrieveRelevantChunks = async (userId, queryEmbedding, documentIds = []) 
           path: 'embedding',
           queryVector: queryEmbedding,
           numCandidates: 100,
-          limit: 3,
-          filter: filterCondition
+          limit: 100, // Fetch broader set upfront to filter down in memory
+          filter: baseFilter
         }
-      },
+      }
+    ];
+
+    // Apply array-based document filtering AFTER vector search using $match
+    if (documentIds && Array.isArray(documentIds) && documentIds.length > 0) {
+      const validIds = documentIds.filter(id => mongoose.Types.ObjectId.isValid(id));
+      if (validIds.length > 0) {
+        pipeline.push({
+          $match: {
+            documentId: { $in: validIds.map(id => new mongoose.Types.ObjectId(id)) }
+          }
+        });
+      }
+    }
+
+    // Limit down to top 3 after removing unmatched documents
+    pipeline.push(
+      { $limit: 3 },
       {
         $project: {
           _id: 0,
@@ -46,7 +54,7 @@ const retrieveRelevantChunks = async (userId, queryEmbedding, documentIds = []) 
           score: { $meta: 'vectorSearchScore' }
         }
       }
-    ];
+    );
 
     const results = await DocumentChunk.aggregate(pipeline);
     return results;
