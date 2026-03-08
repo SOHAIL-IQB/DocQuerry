@@ -7,7 +7,7 @@
  * @param {string} text - The extracted text to chunk.
  * @returns {string[]} Array of overlapping text chunks.
  */
-const chunkText = (text, chunkSize = 2500, overlapSize = 500) => {
+const chunkText = (text, chunkSize = 600, overlapSize = 100) => {
   if (!text || typeof text !== 'string') return [];
 
   const chunks = [];

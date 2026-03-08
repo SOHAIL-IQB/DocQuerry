@@ -8,10 +8,18 @@ const { genAI, generateEmbedding } = require('../utils/gemini');
  * 
  * @param {string} userId - The ID of the user requesting the search (for workspace isolation).
  * @param {number[]} queryEmbedding - The 3072-dimensional vector representation of the query.
+ * @param {string|null} documentId - Optional document ID to restrict the search.
  * @returns {Promise<Array>} - Array of matching chunks with chunkText, documentId, and similarity score.
  */
-const retrieveRelevantChunks = async (userId, queryEmbedding) => {
+const retrieveRelevantChunks = async (userId, queryEmbedding, documentId = null) => {
   try {
+    const filterCondition = {
+      userId: new mongoose.Types.ObjectId(userId)
+    };
+    if (documentId) {
+      filterCondition.documentId = new mongoose.Types.ObjectId(documentId);
+    }
+
     const pipeline = [
       {
         $vectorSearch: {
@@ -19,10 +27,8 @@ const retrieveRelevantChunks = async (userId, queryEmbedding) => {
           path: 'embedding',
           queryVector: queryEmbedding,
           numCandidates: 100,
-          limit: 5,
-          filter: {
-            userId: new mongoose.Types.ObjectId(userId)
-          }
+          limit: 3,
+          filter: filterCondition
         }
       },
       {
@@ -49,19 +55,20 @@ const retrieveRelevantChunks = async (userId, queryEmbedding) => {
  * 
  * @param {string} userId - The ID of the user (for workspace isolation).
  * @param {string} question - The user's prompt question.
+ * @param {string|null} documentId - Optional document ID.
  * @returns {Promise<Object>} - Contains { answer: string, sources: Array }
  */
-const generateAnswer = async (userId, question) => {
+const generateAnswer = async (userId, question, documentId = null) => {
   try {
     // 1. Generate embedding for user query
     const queryEmbedding = await generateEmbedding(question);
 
-    // 2. Retrieve relevant chunks (already limits to 5)
-    const sources = await retrieveRelevantChunks(userId, queryEmbedding);
+    // 2. Retrieve relevant chunks (limits to 3)
+    const sources = await retrieveRelevantChunks(userId, queryEmbedding, documentId);
 
     if (sources.length === 0) {
       return {
-        answer: 'The uploaded documents do not contain this information.',
+        answer: 'I could not find this information in the selected document.',
         sources: []
       };
     }
@@ -69,8 +76,11 @@ const generateAnswer = async (userId, question) => {
     // 3. Construct Context Blocks
     let contextStr = '';
     sources.forEach((source, index) => {
-      contextStr += `\\n--- Chunk ${index + 1} ---\\n${source.chunkText}\\n`;
+      contextStr += `\n--- Chunk ${index + 1} ---\n${source.chunkText}\n`;
     });
+    
+    // Trim context length before sending to LLM
+    contextStr = contextStr.slice(0, 3000);
 
     // 4. Construct Strict Prompt
     const prompt = `Context:
@@ -80,9 +90,10 @@ Question:
 ${question}
 
 Instructions:
-Answer strictly using the context above.
-If the answer is not found, respond with:
-"The uploaded documents do not contain this information."
+You are an AI assistant that answers questions based ONLY on the provided document context.
+If the answer is not found in the provided context, say:
+"I could not find this information in the selected document."
+Do not mix information from different documents.
 Do not guess or fabricate information.
 
 Formatting Rules:

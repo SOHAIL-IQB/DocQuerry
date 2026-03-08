@@ -48,7 +48,7 @@ export const useChat = (initialChatId = null) => {
   };
 
   // Send message to the backend
-  const sendMessage = useCallback(async (question) => {
+  const sendMessage = useCallback(async (question, documentId = null) => {
     if (!question.trim()) return;
 
     try {
@@ -71,7 +71,8 @@ export const useChat = (initialChatId = null) => {
       // Send to Backend API
       const response = await api.post('/chat/message', {
         chatId: currentChatId,
-        question
+        question,
+        documentId
       });
 
       if (response.data.success) {

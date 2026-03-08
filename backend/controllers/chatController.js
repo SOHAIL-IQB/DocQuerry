@@ -2,6 +2,17 @@ const Chat = require('../models/Chat');
 const Message = require('../models/Message');
 const { generateAnswer } = require('../services/ragService');
 
+// Simple Greetings matcher
+const GREETINGS = [
+  "hello", "hi", "hey", "good morning", "good evening", 
+  "how are you", "what can you do", "who are you"
+];
+
+const isGreeting = (msg) => {
+  const cleanMsg = msg.toLowerCase().trim().replace(/[^a-z0-9 ]/g, '');
+  return GREETINGS.includes(cleanMsg);
+};
+
 // @desc    Create a new chat
 // @route   POST /api/chat/create
 // @access  Private
@@ -27,7 +38,7 @@ const createChat = async (req, res) => {
 // @access  Private
 const sendMessage = async (req, res) => {
   try {
-    const { chatId, question } = req.body;
+    const { chatId, question, documentId } = req.body;
 
     if (!chatId || !question) {
       return res.status(400).json({ success: false, error: 'chatId and question are required' });
@@ -59,13 +70,20 @@ const sendMessage = async (req, res) => {
       await chat.save();
     }
 
-    // 5. Call RAG logic safely
+    // 5. Call RAG logic safely or bypass for greetings
     let aiResponse;
-    try {
-      aiResponse = await generateAnswer(req.user._id, question);
-    } catch (llmError) {
-      console.error('generateAnswer error:', llmError);
-      return res.status(500).json({ success: false, error: 'Failed to generate answer' });
+    if (isGreeting(question)) {
+      aiResponse = {
+        answer: "Hello! I'm your DocuQuery assistant.\n\nYou can upload documents such as PDFs, DOCX, or TXT files and ask questions about their content.\n\nHow can I help you today?",
+        sources: []
+      };
+    } else {
+      try {
+        aiResponse = await generateAnswer(req.user._id, question, documentId || null);
+      } catch (llmError) {
+        console.error('generateAnswer error:', llmError);
+        return res.status(500).json({ success: false, error: 'Failed to generate answer' });
+      }
     }
 
     // 6. Save assistant message

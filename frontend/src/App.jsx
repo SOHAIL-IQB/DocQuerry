@@ -9,8 +9,6 @@ import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import Settings from './pages/Settings';
 
-// Temporary Mock Pages
-const Landing = () => <div style={{ padding: '40px', textAlign: 'center' }}><h1>DocuQuery AI</h1><p><a href="/login" style={{color: 'var(--accent-color)'}}>Go to Login</a></p></div>;
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -46,9 +44,10 @@ function App() {
           <Routes>
             {/* Public Routes (Only accessible if NOT logged in) */}
             <Route element={<PublicRoute />}>
-              <Route path="/" element={<Landing />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
+              <Route path="/" element={<Login />} />
+              <Route path="/login" element={<Navigate to="/" replace />} />
+              <Route path="/signup" element={<Register />} />
+              <Route path="/register" element={<Navigate to="/signup" replace />} />
             </Route>
 
             {/* Protected Application Routes wrapped in AppLayout */}

@@ -3,12 +3,32 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Send, Bot, User, Loader2, Info } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { useChat } from '../hooks/useChat';
+import api from '../services/api';
 import './ChatWorkspace.css';
 
 const ChatWorkspace = () => {
   const { chatId: urlChatId } = useParams();
   const navigate = useNavigate();
   const [input, setInput] = useState('');
+  
+  // Document Context Selector
+  const [documents, setDocuments] = useState([]);
+  const [selectedDocumentId, setSelectedDocumentId] = useState('');
+
+  // Fetch documents for the selector
+  useEffect(() => {
+    const fetchDocuments = async () => {
+      try {
+        const { data } = await api.get('/documents');
+        if (data.success) {
+          setDocuments(data.data);
+        }
+      } catch (error) {
+        console.error('Failed to load documents for chat selector', error);
+      }
+    };
+    fetchDocuments();
+  }, []);
   
   // Custom Hook initialized with URL param
   const { 
@@ -38,8 +58,8 @@ const ChatWorkspace = () => {
     
     const userQuery = input;
     setInput('');
-    // Pass user question up to the hook resolver
-    await sendMessage(userQuery);
+    // Pass user question up to the hook resolver along with document specifier
+    await sendMessage(userQuery, selectedDocumentId || null);
     
     // Tell unified sidebar we either created or implicitly updated a chat
     window.dispatchEvent(new Event('chats-changed'));
@@ -87,6 +107,24 @@ const ChatWorkspace = () => {
 
         {/* Input Form */}
         <div className="chat-input-container">
+          {documents.length > 0 && (
+            <div className="document-selector-container">
+              <select 
+                className="document-selector"
+                value={selectedDocumentId}
+                onChange={(e) => setSelectedDocumentId(e.target.value)}
+                disabled={isTyping}
+              >
+                <option value="">All Documents</option>
+                {documents.map(doc => (
+                  <option key={doc._id} value={doc._id}>
+                    {doc.fileName}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+          
           <form onSubmit={handleSend} className="chat-input-form">
             <input
               type="text"
