@@ -216,6 +216,8 @@ const Sidebar = () => {
         </div>
       </nav>
 
+      <div className="sidebar-spacer" />
+
       <div className="sidebar-footer">
         <NavLink to="/settings" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} title="Settings">
           <Settings size={20} />
