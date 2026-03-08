@@ -7,6 +7,7 @@ import ConfirmationModal from '../components/common/ConfirmationModal';
 import UploadZone from '../components/documents/UploadZone';
 import DocumentRow from '../components/documents/DocumentRow';
 import StorageMeter from '../components/documents/StorageMeter';
+import AvatarIcon from '../components/common/AvatarIcon';
 import './Dashboard.css';
 
 const Dashboard = () => {
@@ -134,9 +135,18 @@ const Dashboard = () => {
   return (
     <div className="dashboard-container fade-in">
       <header className="dashboard-header">
-        <div>
-          <h1>Welcome back, {user?.name || 'User'}</h1>
-          <p>Here's an overview of your AI knowledge workspace today.</p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <div style={{ 
+            width: '48px', height: '48px', borderRadius: '12px', 
+            backgroundColor: 'rgba(59, 130, 246, 0.1)', color: 'var(--accent-color)', 
+            display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(59, 130, 246, 0.2)' 
+          }}>
+            <AvatarIcon avatarId={user?.avatar} size={24} />
+          </div>
+          <div>
+            <h1>Welcome back, {user?.name || 'User'}</h1>
+            <p style={{ margin: 0 }}>Here's an overview of your AI knowledge workspace today.</p>
+          </div>
         </div>
       </header>
       

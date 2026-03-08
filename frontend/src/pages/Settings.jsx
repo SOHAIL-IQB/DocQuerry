@@ -206,12 +206,14 @@ const Settings = () => {
 
             <hr className="divider" />
 
-            <form onSubmit={handleUpdatePassword} className="settings-form">
+            <form onSubmit={handleUpdatePassword} className="settings-form" autoComplete="off">
               <h4>Change Password</h4>
               <div className="form-group">
                 <label>Current Password</label>
                 <input 
-                  type="password" 
+                  type="password"
+                  name="current-password"
+                  autoComplete="new-password"
                   value={currentPassword} 
                   onChange={(e) => setCurrentPassword(e.target.value)} 
                   required
@@ -220,7 +222,9 @@ const Settings = () => {
               <div className="form-group">
                 <label>New Password</label>
                 <input 
-                  type="password" 
+                  type="password"
+                  name="new-password"
+                  autoComplete="new-password"
                   value={newPassword} 
                   onChange={(e) => setNewPassword(e.target.value)} 
                   required
@@ -229,7 +233,9 @@ const Settings = () => {
               <div className="form-group">
                 <label>Confirm New Password</label>
                 <input 
-                  type="password" 
+                  type="password"
+                  name="confirm-password"
+                  autoComplete="new-password"
                   value={confirmPassword} 
                   onChange={(e) => setConfirmPassword(e.target.value)} 
                   required

@@ -1,14 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Send, Bot, User, Loader2, Info, FileText, ChevronDown } from 'lucide-react';
+import { Send, Bot, Loader2, Info, FileText, ChevronDown } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { useChat } from '../hooks/useChat';
+import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
+import AvatarIcon from '../components/common/AvatarIcon';
 import './ChatWorkspace.css';
 
 const ChatWorkspace = () => {
   const { chatId: urlChatId } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [input, setInput] = useState('');
   
   // Document Context Selector
@@ -80,7 +83,7 @@ const ChatWorkspace = () => {
           ) : (
             <div className="chat-messages-content">
               {messages.map((msg, index) => (
-                <MessageBubble key={msg._id || index} message={msg} />
+                <MessageBubble key={msg._id || index} message={msg} userAvatar={user?.avatar} />
               ))}
               
               {isTyping && (
@@ -155,13 +158,13 @@ const ChatWorkspace = () => {
 };
 
 // Subcomponent: Message Bubble
-const MessageBubble = ({ message }) => {
+const MessageBubble = ({ message, userAvatar }) => {
   const isUser = message.role === 'user';
   
   return (
     <div className={`message-wrapper ${isUser ? 'user' : 'assistant'}`}>
       <div className="message-avatar">
-        {isUser ? <User size={18} /> : <Bot size={18} />}
+        {isUser ? <AvatarIcon avatarId={userAvatar} size={18} /> : <Bot size={18} />}
       </div>
       <div className="message-bubble-container">
         <div className="message-bubble">

@@ -3,11 +3,12 @@ import { NavLink, Link, useLocation, useNavigate } from 'react-router-dom';
 import { LayoutDashboard, MessageSquare, Settings, LogOut, PanelLeftClose, PanelLeftOpen, Plus, Edit2, Trash2, Check, X, Bot } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import ConfirmationModal from '../common/ConfirmationModal';
+import AvatarIcon from '../common/AvatarIcon';
 import api from '../../services/api';
 import './Sidebar.css';
 
 const Sidebar = () => {
-  const { logout } = useAuth();
+  const { user, logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   
@@ -219,6 +220,17 @@ const Sidebar = () => {
       <div className="sidebar-spacer" />
 
       <div className="sidebar-footer">
+        <div className="sidebar-user-profile" style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '0 8px 12px 8px', color: 'var(--text-primary)' }}>
+          <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: 'rgba(59, 130, 246, 0.1)', color: 'var(--accent-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <AvatarIcon avatarId={user?.avatar} size={18} />
+          </div>
+          {!collapsed && (
+            <div style={{ overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis', fontSize: '0.9rem', fontWeight: 500 }}>
+              {user?.name || 'User'}
+            </div>
+          )}
+        </div>
+        
         <NavLink to="/settings" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} title="Settings">
           <Settings size={20} />
           {!collapsed && <span>Settings</span>}
