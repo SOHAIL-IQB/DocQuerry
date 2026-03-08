@@ -73,8 +73,11 @@ const sendMessage = async (req, res) => {
     // 5. Call RAG logic safely or bypass for greetings
     let aiResponse;
     if (isGreeting(question)) {
+      const userName = req.user && req.user.name ? req.user.name : '';
+      const greetingFormat = userName ? `Hello ${userName}!` : 'Hello!';
+      
       aiResponse = {
-        answer: "Hello! I'm your DocuQuery assistant.\n\nYou can upload documents such as PDFs, DOCX, or TXT files and ask questions about their content.\n\nHow can I help you today?",
+        answer: `${greetingFormat} I'm your DocuQuery assistant.\n\nYou can upload documents such as PDFs, DOCX, or TXT files and ask questions about their content.\n\nHow can I help you today?`,
         sources: []
       };
     } else {
