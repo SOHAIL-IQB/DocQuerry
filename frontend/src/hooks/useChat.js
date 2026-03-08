@@ -72,7 +72,7 @@ export const useChat = (initialChatId = null) => {
       const response = await api.post('/chat/message', {
         chatId: currentChatId,
         question,
-        documentIds
+        documentIds: Array.isArray(documentIds) ? documentIds : []
       });
 
       if (response.data.success) {

@@ -17,11 +17,14 @@ const retrieveRelevantChunks = async (userId, queryEmbedding, documentIds = []) 
       userId: new mongoose.Types.ObjectId(userId)
     };
     
-    // Apply array-based document filtering
-    if (documentIds && documentIds.length > 0) {
-      filterCondition.documentId = { 
-        $in: documentIds.map(id => new mongoose.Types.ObjectId(id)) 
-      };
+    // Apply array-based document filtering safely
+    if (documentIds && Array.isArray(documentIds) && documentIds.length > 0) {
+      const validIds = documentIds.filter(id => mongoose.Types.ObjectId.isValid(id));
+      if (validIds.length > 0) {
+        filterCondition.documentId = { 
+          $in: validIds.map(id => new mongoose.Types.ObjectId(id)) 
+        };
+      }
     }
 
     const pipeline = [
