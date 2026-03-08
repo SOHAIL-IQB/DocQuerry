@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Send, Bot, User, Loader2, Info } from 'lucide-react';
+import { Send, Bot, User, Loader2, Info, FileText, ChevronDown } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { useChat } from '../hooks/useChat';
 import api from '../services/api';
@@ -107,24 +107,6 @@ const ChatWorkspace = () => {
 
         {/* Input Form */}
         <div className="chat-input-container">
-          {documents.length > 0 && (
-            <div className="document-selector-container">
-              <select 
-                className="document-selector"
-                value={selectedDocumentId}
-                onChange={(e) => setSelectedDocumentId(e.target.value)}
-                disabled={isTyping}
-              >
-                <option value="">All Documents</option>
-                {documents.map(doc => (
-                  <option key={doc._id} value={doc._id}>
-                    {doc.fileName}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
-          
           <form onSubmit={handleSend} className="chat-input-form">
             <input
               type="text"
@@ -134,13 +116,34 @@ const ChatWorkspace = () => {
               placeholder="Ask a question about your documents..."
               disabled={isTyping}
             />
-            <button 
-              type="submit" 
-              className="chat-submit-btn"
-              disabled={!input.trim() || isTyping}
-            >
-              {isTyping ? <Loader2 size={18} className="spin" /> : <Send size={18} />}
-            </button>
+            <div className="chat-input-controls">
+              {documents.length > 0 && (
+                <div className="inline-selector-wrapper">
+                  <FileText size={14} className="selector-icon" />
+                  <select 
+                    className="inline-document-selector"
+                    value={selectedDocumentId}
+                    onChange={(e) => setSelectedDocumentId(e.target.value)}
+                    disabled={isTyping}
+                  >
+                    <option value="">All Documents</option>
+                    {documents.map(doc => (
+                      <option key={doc._id} value={doc._id}>
+                        {doc.fileName.length > 15 ? doc.fileName.substring(0, 15) + '...' : doc.fileName}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown size={14} className="selector-chevron" />
+                </div>
+              )}
+              <button 
+                type="submit" 
+                className="chat-submit-btn"
+                disabled={!input.trim() || isTyping}
+              >
+                {isTyping ? <Loader2 size={18} className="spin" /> : <Send size={18} />}
+              </button>
+            </div>
           </form>
           <div className="chat-footer-text">
             Responses are generated strictly from uploaded document context.

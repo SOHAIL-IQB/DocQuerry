@@ -1,10 +1,30 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { UploadCloud, AlertCircle, Loader2 } from 'lucide-react';
+
+const PROGRESS_MESSAGES = [
+  "Analyzing document...",
+  "Generating embeddings...",
+  "Preparing AI search..."
+];
 
 const UploadZone = ({ onUpload, isUploading, disabled }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [error, setError] = useState('');
+  const [messageIndex, setMessageIndex] = useState(0);
   const fileInputRef = useRef(null);
+
+  useEffect(() => {
+    let interval;
+    if (isUploading) {
+      setMessageIndex(0);
+      interval = setInterval(() => {
+        setMessageIndex((prev) => (prev + 1) % PROGRESS_MESSAGES.length);
+      }, 3000);
+    } else {
+      setMessageIndex(0);
+    }
+    return () => clearInterval(interval);
+  }, [isUploading]);
 
   const handleDrag = (e) => {
     e.preventDefault();
@@ -80,9 +100,11 @@ const UploadZone = ({ onUpload, isUploading, disabled }) => {
         />
         
         {isUploading ? (
-          <div className="upload-content text-center">
-            <Loader2 className="spin" size={40} />
-            <p>Processing text extraction and embeddings...</p>
+          <div className="upload-processing">
+            <Loader2 className="spin" size={36} color="var(--accent-color)" />
+            <p style={{ fontWeight: 500, color: 'var(--text-primary)', marginTop: '4px' }}>
+              {PROGRESS_MESSAGES[messageIndex]}
+            </p>
           </div>
         ) : (
           <div className="upload-content text-center">

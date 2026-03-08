@@ -196,11 +196,17 @@
     display: grid;
     grid-template-columns: 2fr 1fr;
     gap: 24px;
+    align-items: stretch;
+}
+
+.dashboard-content-grid>* {
+    min-width: 0;
 }
 
 .dashboard-panel {
-    background-color: var(--bg-surface);
-    border: 1px solid var(--border-color);
+    background-color: rgba(255, 255, 255, 0.02);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
     border-radius: 12px;
     overflow: hidden;
     display: flex;
@@ -390,10 +396,21 @@
     transition: all 0.2s;
 }
 
+.action-card.new-chat-btn {
+    background: linear-gradient(135deg, #4f7cff, #6c8dff);
+    box-shadow: 0 8px 18px rgba(80, 120, 255, 0.25);
+    border: none;
+}
+
 .action-card:hover {
     border-color: var(--accent-color);
     background-color: rgba(59, 130, 246, 0.05);
     transform: translateY(-2px);
+}
+
+.action-card.new-chat-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 22px rgba(80, 120, 255, 0.35);
 }
 
 .action-icon {
@@ -433,9 +450,10 @@
 }
 
 .upload-zone {
+    width: 100%;
+    height: 220px;
     border: 2px dashed rgba(255, 255, 255, 0.15);
-    border-radius: 16px;
-    padding: 40px 24px;
+    border-radius: 14px;
     background-color: rgba(255, 255, 255, 0.02);
     cursor: pointer;
     transition: all 0.25s ease;
@@ -443,7 +461,6 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    min-height: 180px;
 }
 
 .upload-zone:hover {
@@ -468,6 +485,15 @@
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.upload-processing {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
 }
 
 .upload-icon-wrapper {
@@ -514,16 +540,16 @@
     padding: 16px 20px;
     background-color: var(--bg-surface);
     border: 1px solid var(--border-color);
-    border-radius: 12px;
+    border-radius: 10px;
     gap: 20px;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.2s ease;
 }
 
 .document-row:hover {
+    background: rgba(255, 255, 255, 0.03);
+    transform: translateY(-1px);
     border-color: rgba(255, 255, 255, 0.15);
-    background-color: rgba(255, 255, 255, 0.03);
-    transform: translateY(-2px);
-    box-shadow: 0 8px 24px -8px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 4px 12px -4px rgba(0, 0, 0, 0.2);
 }
 
 .doc-icon-wrapper {
