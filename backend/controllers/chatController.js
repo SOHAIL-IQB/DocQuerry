@@ -38,7 +38,7 @@ const createChat = async (req, res) => {
 // @access  Private
 const sendMessage = async (req, res) => {
   try {
-    const { chatId, question, documentId } = req.body;
+    const { chatId, question, documentIds } = req.body;
 
     if (!chatId || !question) {
       return res.status(400).json({ success: false, error: 'chatId and question are required' });
@@ -79,7 +79,7 @@ const sendMessage = async (req, res) => {
       };
     } else {
       try {
-        aiResponse = await generateAnswer(req.user._id, question, documentId || null);
+        aiResponse = await generateAnswer(req.user._id, question, documentIds || []);
       } catch (llmError) {
         console.error('generateAnswer error:', llmError);
         return res.status(500).json({ success: false, error: 'Failed to generate answer' });

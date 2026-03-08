@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Send, Bot, Loader2, Info, FileText, ChevronDown } from 'lucide-react';
+import { Send, Bot, Loader2, Info, FileText, ChevronDown, CheckSquare, Square, UploadCloud, Paperclip } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { useChat } from '../hooks/useChat';
 import { useAuth } from '../context/AuthContext';
@@ -16,7 +16,15 @@ const ChatWorkspace = () => {
   
   // Document Context Selector
   const [documents, setDocuments] = useState([]);
-  const [selectedDocumentId, setSelectedDocumentId] = useState('');
+  const [selectedDocuments, setSelectedDocuments] = useState([]);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  
+  // Inline Upload State
+  const [isUploading, setIsUploading] = useState(false);
+  const [dragActive, setDragActive] = useState(false);
+  
+  const dropdownRef = useRef(null);
+  const fileInputRef = useRef(null);
 
   // Fetch documents for the selector
   useEffect(() => {
@@ -55,14 +63,116 @@ const ChatWorkspace = () => {
     if (urlChatId !== chatId) setChatId(urlChatId);
   }, [urlChatId, setChatId, chatId]);
 
+  // Handle outside click to close dropdown
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const toggleDocumentSelection = (docId) => {
+    setSelectedDocuments(prev => {
+      if (prev.includes(docId)) {
+        return prev.filter(id => id !== docId);
+      } else {
+        return [...prev, docId];
+      }
+    });
+  };
+
+  // ----- Inline Upload Logic ----- 
+  
+  const processUpload = async (file) => {
+    if (!file) return;
+    
+    const validTypes = [
+      'application/pdf',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'text/plain'
+    ];
+    
+    if (!validTypes.includes(file.type)) {
+      alert('Only PDF, DOCX, and TXT files are allowed.');
+      return;
+    }
+    
+    if (file.size > 10 * 1024 * 1024) {
+      alert('File size exceeds the 10MB limit.');
+      return;
+    }
+
+    try {
+      setIsUploading(true);
+      const formData = new FormData();
+      formData.append('document', file);
+      
+      const { data } = await api.post('/documents/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      
+      if (data.success) {
+        // Add the new document to the list and auto-select it
+        const newDoc = data.data;
+        setDocuments(prev => [newDoc, ...prev]);
+        setSelectedDocuments(prev => {
+          if (!prev.includes(newDoc._id)) {
+             return [...prev, newDoc._id];
+          }
+          return prev;
+        });
+      }
+    } catch (err) {
+      console.error('Upload failed inline:', err);
+      // Backend handles size limits and sends 400s
+      alert(err.response?.data?.error || 'Failed to upload document.');
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const handleFileSelect = (e) => {
+    e.preventDefault();
+    if (e.target.files && e.target.files.length > 0) {
+      processUpload(e.target.files[0]);
+    }
+  };
+
+  // ----- Drag and Drop Core Handlers -----
+
+  const handleDrag = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDragActive(true);
+    } else if (e.type === "dragleave") {
+      setDragActive(false);
+    }
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      processUpload(e.dataTransfer.files[0]);
+    }
+  };
+
+  // ----- Chat Query Logic -----
+
   const handleSend = async (e) => {
     e.preventDefault();
     if (!input.trim() || isTyping) return;
     
     const userQuery = input;
     setInput('');
-    // Pass user question up to the hook resolver along with document specifier
-    await sendMessage(userQuery, selectedDocumentId || null);
+    // Pass user question up to the hook resolver along with document specifiers array
+    await sendMessage(userQuery, selectedDocuments.length > 0 ? selectedDocuments : []);
     
     // Tell unified sidebar we either created or implicitly updated a chat
     window.dispatchEvent(new Event('chats-changed'));
@@ -108,41 +218,110 @@ const ChatWorkspace = () => {
           </div>
         )}
 
-        {/* Input Form */}
-        <div className="chat-input-container">
-          <form onSubmit={handleSend} className="chat-input-form">
+        {/* Input Form with Drag and Drop Support */}
+        <div 
+          className={`chat-input-container ${dragActive ? 'drag-active' : ''}`}
+          onDragEnter={handleDrag}
+          onDragLeave={handleDrag}
+          onDragOver={handleDrag}
+          onDrop={handleDrop}
+        >
+          {dragActive && (
+            <div className="drag-overlay">
+              <UploadCloud size={48} className="bounce" />
+              <p>Drop to upload document instantly</p>
+            </div>
+          )}
+          
+          <form onSubmit={handleSend} className="chat-input-form relative">
             <input
               type="text"
               className="chat-input"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Ask a question about your documents..."
-              disabled={isTyping}
+              placeholder={isUploading ? "Uploading and extracting document context..." : "Ask a question about your documents..."}
+              disabled={isTyping || isUploading}
             />
-            <div className="chat-input-controls">
+            
+            <div className="chat-input-controls flex-controls">
+              {/* Document Selector Header Box */}
               {documents.length > 0 && (
-                <div className="inline-selector-wrapper">
-                  <FileText size={14} className="selector-icon" />
-                  <select 
-                    className="inline-document-selector"
-                    value={selectedDocumentId}
-                    onChange={(e) => setSelectedDocumentId(e.target.value)}
-                    disabled={isTyping}
+                <div className="custom-dropdown-container" ref={dropdownRef}>
+                  <div 
+                    className="inline-selector-wrapper" 
+                    onClick={() => setDropdownOpen(!dropdownOpen)}
                   >
-                    <option value="">All Documents</option>
-                    {documents.map(doc => (
-                      <option key={doc._id} value={doc._id}>
-                        {doc.fileName.length > 15 ? doc.fileName.substring(0, 15) + '...' : doc.fileName}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown size={14} className="selector-chevron" />
+                    <FileText size={14} className="selector-icon" />
+                    <div className="selector-label">
+                      {selectedDocuments.length === 0 
+                        ? 'All Documents' 
+                        : `${selectedDocuments.length} Selected`}
+                    </div>
+                    <ChevronDown size={14} className="selector-chevron" />
+                  </div>
+                  
+                  {dropdownOpen && (
+                    <div className="dropdown-menu">
+                      <div 
+                        className={`dropdown-item ${selectedDocuments.length === 0 ? 'active' : ''}`}
+                        onClick={() => setSelectedDocuments([])}
+                      >
+                         <div className="checkbox-icon">
+                           {selectedDocuments.length === 0 ? <CheckSquare size={16} color="var(--accent-color)" /> : <Square size={16} />}
+                         </div>
+                         <span>All Documents</span>
+                      </div>
+                      <div className="dropdown-divider"></div>
+                      
+                      <div className="dropdown-scroll-area">
+                        {documents.map(doc => {
+                          const isSelected = selectedDocuments.includes(doc._id);
+                          return (
+                            <div 
+                              key={doc._id} 
+                              className={`dropdown-item ${isSelected ? 'active' : ''}`}
+                              onClick={() => toggleDocumentSelection(doc._id)}
+                            >
+                              <div className="checkbox-icon">
+                                 {isSelected ? <CheckSquare size={16} color="var(--accent-color)" /> : <Square size={16} />}
+                              </div>
+                              <span title={doc.fileName}>
+                                {doc.fileName.length > 20 ? doc.fileName.substring(0, 20) + '...' : doc.fileName}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
+              
+              {/* Inline Hidden File Input */}
+              <input
+                type="file"
+                ref={fileInputRef}
+                style={{ display: 'none' }}
+                accept=".pdf,.docx,.txt,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain"
+                onChange={handleFileSelect}
+                disabled={isUploading}
+              />
+              
+              {/* Upload Trigger Button */}
+              <button
+                type="button"
+                className="chat-upload-trigger-btn"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isUploading || isTyping}
+                title="Upload Document"
+              >
+                {isUploading ? <Loader2 size={16} className="spin" /> : <Paperclip size={16} />}
+              </button>
+              
               <button 
                 type="submit" 
                 className="chat-submit-btn"
-                disabled={!input.trim() || isTyping}
+                disabled={!input.trim() || isTyping || isUploading}
               >
                 {isTyping ? <Loader2 size={18} className="spin" /> : <Send size={18} />}
               </button>

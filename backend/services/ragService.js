@@ -8,16 +8,20 @@ const { genAI, generateEmbedding } = require('../utils/gemini');
  * 
  * @param {string} userId - The ID of the user requesting the search (for workspace isolation).
  * @param {number[]} queryEmbedding - The 3072-dimensional vector representation of the query.
- * @param {string|null} documentId - Optional document ID to restrict the search.
+ * @param {string[]} documentIds - Optional array of document IDs to restrict the search.
  * @returns {Promise<Array>} - Array of matching chunks with chunkText, documentId, and similarity score.
  */
-const retrieveRelevantChunks = async (userId, queryEmbedding, documentId = null) => {
+const retrieveRelevantChunks = async (userId, queryEmbedding, documentIds = []) => {
   try {
     const filterCondition = {
       userId: new mongoose.Types.ObjectId(userId)
     };
-    if (documentId) {
-      filterCondition.documentId = new mongoose.Types.ObjectId(documentId);
+    
+    // Apply array-based document filtering
+    if (documentIds && documentIds.length > 0) {
+      filterCondition.documentId = { 
+        $in: documentIds.map(id => new mongoose.Types.ObjectId(id)) 
+      };
     }
 
     const pipeline = [
@@ -55,16 +59,16 @@ const retrieveRelevantChunks = async (userId, queryEmbedding, documentId = null)
  * 
  * @param {string} userId - The ID of the user (for workspace isolation).
  * @param {string} question - The user's prompt question.
- * @param {string|null} documentId - Optional document ID.
+ * @param {string[]} documentIds - Optional array of document IDs.
  * @returns {Promise<Object>} - Contains { answer: string, sources: Array }
  */
-const generateAnswer = async (userId, question, documentId = null) => {
+const generateAnswer = async (userId, question, documentIds = []) => {
   try {
     // 1. Generate embedding for user query
     const queryEmbedding = await generateEmbedding(question);
 
     // 2. Retrieve relevant chunks (limits to 3)
-    const sources = await retrieveRelevantChunks(userId, queryEmbedding, documentId);
+    const sources = await retrieveRelevantChunks(userId, queryEmbedding, documentIds);
 
     if (sources.length === 0) {
       return {
