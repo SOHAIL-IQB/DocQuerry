@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import './ConfirmationModal.css';
 
@@ -32,7 +33,7 @@ const ConfirmationModal = ({ isOpen, title, message, onConfirm, onCancel, confir
 
   if (!isOpen) return null;
 
-  return (
+  return createPortal(
     <div className="modal-overlay" onClick={handleOverlayClick}>
       <div className="modal-content" ref={modalRef}>
         <div className="modal-header">
@@ -51,7 +52,8 @@ const ConfirmationModal = ({ isOpen, title, message, onConfirm, onCancel, confir
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 
