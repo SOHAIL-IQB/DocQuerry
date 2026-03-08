@@ -10,7 +10,18 @@ const Sidebar = () => {
   const { logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
-  const [collapsed, setCollapsed] = useState(false);
+  
+  // Persist sidebar state using localStorage
+  const [collapsed, setCollapsed] = useState(() => {
+    const savedState = localStorage.getItem('docuquery_sidebar_collapsed');
+    return savedState ? JSON.parse(savedState) : false;
+  });
+  
+  // Sync collapse state changes back to localStorage
+  useEffect(() => {
+    localStorage.setItem('docuquery_sidebar_collapsed', JSON.stringify(collapsed));
+  }, [collapsed]);
+  
   const [chats, setChats] = useState([]);
   
   const [editingChatId, setEditingChatId] = useState(null);
