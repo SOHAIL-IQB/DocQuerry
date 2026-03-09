@@ -10,7 +10,8 @@ const DocumentRow = ({ document, onDelete, onRename }) => {
   const fileSize = document?.fileSize || 0;
   const formattedSize = (fileSize / (1024 * 1024)).toFixed(2) + ' MB';
   const formattedDate = new Date(document?.createdAt || Date.now()).toLocaleDateString();
-  const isProcessing = document?.status === 'processing';
+  const isProcessing = document?.status === 'Processing' || document?.status === 'processing';
+  const isFailed = document?.status === 'Failed' || document?.status === 'failed';
 
   const handleRenameSubmit = async () => {
     if (!editName.trim() || editName === document.fileName) {
@@ -65,8 +66,16 @@ const DocumentRow = ({ document, onDelete, onRename }) => {
           <span className="dot-separator">•</span>
           <span>{formattedDate}</span>
           <span className="dot-separator">•</span>
-          <span className={`doc-status ${isProcessing ? 'status-processing' : 'status-ready'}`}>
-            {isProcessing ? 'Processing...' : 'Ready'}
+          <span className={`doc-status ${isProcessing ? 'status-processing' : isFailed ? 'status-failed' : 'status-ready'}`}>
+            {isProcessing ? (
+              <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <Loader2 size={12} className="spin" /> Generating embeddings...
+              </span>
+            ) : isFailed ? (
+              <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#ef4444' }}>
+                <X size={12} /> Embedding failed
+              </span>
+            ) : 'Ready'}
           </span>
         </div>
       </div>

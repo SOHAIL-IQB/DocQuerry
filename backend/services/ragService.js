@@ -71,8 +71,8 @@ const retrieveRelevantChunks = async (userId, queryEmbedding, documentIds = []) 
       }
     });
 
-    // Limit down to top 3 after removing unmatched documents
-    pipeline.push({ $limit: 3 });
+    // Limit down to top 6 after removing unmatched documents to increase diversity across All Documents search
+    pipeline.push({ $limit: 6 });
 
     const results = await DocumentChunk.aggregate(pipeline);
     return results;
@@ -112,8 +112,8 @@ const generateAnswer = async (userId, question, documentIds = []) => {
       contextStr += `\n--- Chunk ${index + 1} ---\n${source.chunkText}\n`;
     });
     
-    // Trim context length before sending to LLM
-    contextStr = contextStr.slice(0, 3000);
+    // Trim context length before sending to LLM (allow ~8000 chars for 6 diverse chunks)
+    contextStr = contextStr.slice(0, 8000);
 
     // 4. Construct Strict Prompt
     const prompt = `Context:
@@ -123,10 +123,10 @@ Question:
 ${question}
 
 Instructions:
-You are an AI assistant that answers questions based ONLY on the provided document context.
-If the answer is not found in the provided context, say:
+You are an intelligent AI assistant that answers questions based ONLY on the provided document context. Evaluate ALL of the provided context chunks across different documents to form a comprehensive answer.
+CRITICAL: DO NOT use phrases like "based on the provided chunk", "according to the document", or "in chunk 2". Just answer the question naturally and directly, weaving the facts together seamlessly.
+If the answer is entirely missing from the provided context, simply say:
 "I could not find this information in the selected document."
-Do not mix information from different documents.
 Do not guess or fabricate information.
 
 Formatting Rules:

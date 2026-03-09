@@ -40,6 +40,36 @@ const ChatWorkspace = () => {
     };
     fetchDocuments();
   }, []);
+
+  // Monitor Processing Status and Poll
+  useEffect(() => {
+    let pollInterval;
+    if (documents.some(doc => doc.status === 'Processing')) {
+      pollInterval = setInterval(async () => {
+        try {
+          const { data } = await api.get('/documents');
+          if (data.success) {
+            
+            // Check if any processing docs finished since last poll
+            const newDocs = data.data;
+            const newlyReady = newDocs.filter(nDoc => 
+              nDoc.status === 'Ready' && 
+              documents.find(oDoc => oDoc._id === nDoc._id && oDoc.status === 'Processing')
+            );
+            
+            if (newlyReady.length > 0) {
+               alert("Document is ready for AI queries.");
+            }
+            
+            setDocuments(newDocs);
+          }
+        } catch (err) {
+          console.error("Failed to poll documents", err);
+        }
+      }, 5000);
+    }
+    return () => clearInterval(pollInterval);
+  }, [documents]);
   
   // Custom Hook initialized with URL param
   const { 
@@ -280,18 +310,28 @@ const ChatWorkspace = () => {
                       
                       <div className="dropdown-scroll-area">
                         {documents.map(doc => {
-                          const isSelected = selectedDocuments.includes(doc._id);
+                          const isSelected = selectedDocuments.length === 0 || selectedDocuments.includes(doc._id);
+                          const isProcessing = doc.status === 'Processing';
+                          const isFailed = doc.status === 'Failed';
+                          const isDisabled = isProcessing || isFailed;
+                          
                           return (
                             <div 
                               key={doc._id} 
                               className={`dropdown-item ${isSelected ? 'active' : ''}`}
-                              onClick={() => toggleDocumentSelection(doc._id)}
+                              onClick={() => !isDisabled && toggleDocumentSelection(doc._id)}
+                              style={{ 
+                                opacity: isDisabled ? 0.5 : 1, 
+                                cursor: isDisabled ? 'not-allowed' : 'pointer'
+                              }}
                             >
                               <div className="checkbox-icon">
                                  {isSelected ? <CheckSquare size={16} color="var(--accent-color)" /> : <Square size={16} />}
                               </div>
-                              <span title={doc.fileName}>
+                              <span title={doc.fileName} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                 {doc.fileName.length > 20 ? doc.fileName.substring(0, 20) + '...' : doc.fileName}
+                                {isProcessing && <Loader2 size={12} className="spin" color="var(--accent-color)" />}
+                                {isFailed && <span style={{ color: '#ef4444', fontSize: '0.75rem' }}>Failed</span>}
                               </span>
                             </div>
                           );

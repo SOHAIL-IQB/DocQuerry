@@ -51,6 +51,34 @@ const Dashboard = () => {
     fetchDashboardData();
   }, []);
 
+  // Monitor Processing Status and Poll
+  useEffect(() => {
+    let pollInterval;
+    if (documents.some(doc => doc.status === 'Processing')) {
+      pollInterval = setInterval(async () => {
+        try {
+          const { data } = await api.get('/documents');
+          if (data.success) {
+            const newDocs = data.data;
+            const newlyReady = newDocs.filter(nDoc => 
+              nDoc.status === 'Ready' && 
+              documents.find(oDoc => oDoc._id === nDoc._id && oDoc.status === 'Processing')
+            );
+            
+            if (newlyReady.length > 0) {
+               alert("Document is ready for AI queries.");
+            }
+            
+            setDocuments(newDocs);
+          }
+        } catch (err) {
+          console.error("Failed to poll documents", err);
+        }
+      }, 5000);
+    }
+    return () => clearInterval(pollInterval);
+  }, [documents]);
+
   const totalBytes = documents.reduce((acc, doc) => acc + (doc.fileSize || 0), 0);
   const isStorageExceeded = totalBytes >= 50 * 1024 * 1024; // 50MB
 
