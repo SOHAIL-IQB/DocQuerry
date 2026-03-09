@@ -71,8 +71,44 @@ const retrieveRelevantChunks = async (userId, queryEmbedding, documentIds = []) 
       }
     });
 
-    // Limit down to top 6 after removing unmatched documents to increase diversity across All Documents search
-    pipeline.push({ $limit: 6 });
+    // Enforce Document Diversity: Prevent a single document from monopolizing the "All Documents" context window
+    pipeline.push(
+      {
+        // Group by document ID while preserving the sorted order from VectorSearch
+        $group: {
+          _id: '$documentId',
+          chunks: {
+            $push: {
+              chunkText: '$chunkText',
+              documentId: '$documentId',
+              score: '$score'
+            }
+          }
+        }
+      },
+      {
+        // Keep ONLY the top 3 most relevant chunks per document
+        $project: {
+          topChunks: { $slice: ['$chunks', 3] }
+        }
+      },
+      {
+        // Flatten the array of chunks back into individual documents
+        $unwind: '$topChunks'
+      },
+      {
+        // Replace root to restore original chunk structure
+        $replaceRoot: { newRoot: '$topChunks' }
+      },
+      {
+        // Re-sort globally by vector score since grouping scrambles order
+        $sort: { score: -1 }
+      },
+      {
+        // Limit down to top 8 diverse chunks overall across all matched documents
+        $limit: 8
+      }
+    );
 
     const results = await DocumentChunk.aggregate(pipeline);
     return results;
@@ -112,8 +148,8 @@ const generateAnswer = async (userId, question, documentIds = []) => {
       contextStr += `\n--- Chunk ${index + 1} ---\n${source.chunkText}\n`;
     });
     
-    // Trim context length before sending to LLM (allow ~8000 chars for 6 diverse chunks)
-    contextStr = contextStr.slice(0, 8000);
+    // Trim context length before sending to LLM (allow ~10,000 chars for up to 8 diverse chunks)
+    contextStr = contextStr.slice(0, 10000);
 
     // 4. Construct Strict Prompt
     const prompt = `Context:
