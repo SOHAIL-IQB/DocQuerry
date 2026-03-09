@@ -3,7 +3,7 @@ const User = require('../models/User');
 const DocumentChunk = require('../models/DocumentChunk');
 const { extractText } = require('../utils/extractText');
 const { chunkText } = require('../utils/chunkText');
-const { generateEmbedding } = require('../utils/gemini');
+const { generateEmbedding, generateEmbeddingsBatch } = require('../utils/gemini');
 const { retrieveRelevantChunks } = require('../services/ragService');
 
 // @desc    Upload and process a document
@@ -28,21 +28,27 @@ const uploadDocument = async (req, res) => {
     try {
       extractedText = await extractText(req.file.buffer, req.file.mimetype);
       
-      // 3. Chunk text and generate embeddings
+      // 3. Chunk text and generate embeddings in batches
       const chunks = chunkText(extractedText);
+      const chunkDocs = [];
+      const BATCH_SIZE = 100; // Gemini limit for batch embeddings is typically 100
       
-      const chunkPromises = chunks.map(async (chunkTextStr, index) => {
-        const embedding = await generateEmbedding(chunkTextStr);
-        return {
-          documentId: newDoc._id,
-          userId: req.user.id,
-          text: chunkTextStr,
-          embedding: embedding,
-          chunkIndex: index
-        };
-      });
+      for (let i = 0; i < chunks.length; i += BATCH_SIZE) {
+        const batchChunks = chunks.slice(i, i + BATCH_SIZE);
+        // Process up to BATCH_SIZE chunks in a single API request
+        const batchEmbeddings = await generateEmbeddingsBatch(batchChunks);
+        
+        batchChunks.forEach((chunkTextStr, idx) => {
+          chunkDocs.push({
+            documentId: newDoc._id,
+            userId: req.user.id,
+            text: chunkTextStr,
+            embedding: batchEmbeddings[idx],
+            chunkIndex: i + idx
+          });
+        });
+      }
 
-      const chunkDocs = await Promise.all(chunkPromises);
       if (chunkDocs.length > 0) {
         await DocumentChunk.insertMany(chunkDocs);
       }
