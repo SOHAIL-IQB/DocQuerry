@@ -124,6 +124,11 @@ const ChatWorkspace = () => {
           }
           return prev;
         });
+
+        // Inform user about background processing if response is 202
+        if (data.message && data.message.includes('background')) {
+            alert('Document uploaded! Note: Large documents may still be generating AI embeddings in the background for a few minutes.');
+        }
       }
     } catch (err) {
       console.error('Upload failed inline:', err);

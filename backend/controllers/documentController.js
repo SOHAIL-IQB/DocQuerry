@@ -30,71 +30,98 @@ const uploadDocument = async (req, res) => {
     try {
       extractedText = await extractText(req.file.buffer, req.file.mimetype);
       
-      // 3. Chunk text, validate limits, and generate embeddings sequentially
-      const chunks = chunkText(extractedText);
-      
-      console.log(`Total chunks created: ${chunks.length}`);
-      
-      if (chunks.length > 300) {
-        newDoc.status = 'Failed';
-        await newDoc.save();
-        console.warn(`[UPLOAD ABORTED] Document chunks (${chunks.length}) exceed the 300 safety threshold.`);
-        return res.status(400).json({ 
-          success: false, 
-          error: `Document is too large. It generated ${chunks.length} chunks (max 300 allowed).` 
-        });
-      }
-
-      const chunkDocs = [];
-      
-      for (const [index, chunkTextStr] of chunks.entries()) {
-        try {
-          console.log(`Generating embedding for chunk: ${index + 1}/${chunks.length}`);
-          const embedding = await generateEmbedding(chunkTextStr);
-          
-          chunkDocs.push({
-            documentId: newDoc._id,
-            userId: req.user.id,
-            text: chunkTextStr,
-            embedding: embedding,
-            chunkIndex: index
-          });
-          
-          // 600ms buffer between chunks to avoid rate limiting
-          await sleep(600);
-        } catch (err) {
-          console.error(`Embedding failed for chunk ${index}:`, err);
-          // Continue processing other chunks even if one fails
-        }
-      }
-
-      if (chunkDocs.length > 0) {
-        await DocumentChunk.insertMany(chunkDocs);
-      }
-
-      // Update document status to Ready
-      newDoc.status = 'Ready';
-      await newDoc.save();
-
-      // Update user's total storage used
-      const user = await User.findById(req.user._id);
-      user.totalStorageUsed += req.file.size;
-      await user.save();
-
-      res.status(201).json({
+      // 3. Start asynchronous embedding generation in the background
+      res.status(202).json({
         success: true,
+        message: 'Document uploaded and is now processing in the background.',
         data: newDoc
       });
+
+      // Execute vector embeddings asynchronously so the HTTP request doesn't timeout
+      (async () => {
+        try {
+          const chunks = chunkText(extractedText);
+          console.log(`Total chunks created: ${chunks.length}`);
+          
+          if (chunks.length > 500) {
+            newDoc.status = 'Failed';
+            await newDoc.save();
+            console.warn(`[UPLOAD ABORTED] Document chunks (${chunks.length}) exceed the high-volume safety threshold.`);
+            return;
+          }
+
+          const chunkDocs = [];
+          
+          for (const [index, chunkTextStr] of chunks.entries()) {
+            try {
+              console.log(`Embedding chunk ${index + 1}/${chunks.length}`);
+              const embedding = await generateEmbedding(chunkTextStr);
+              
+              chunkDocs.push({
+                documentId: newDoc._id,
+                userId: req.user.id,
+                text: chunkTextStr,
+                embedding: embedding,
+                chunkIndex: index
+              });
+              
+            } catch (err) {
+              console.log(`Retrying embedding for chunk ${index + 1}...`);
+              await sleep(2000);
+              
+              try {
+                const retryEmbedding = await generateEmbedding(chunkTextStr);
+                chunkDocs.push({
+                  documentId: newDoc._id,
+                  userId: req.user.id,
+                  text: chunkTextStr,
+                  embedding: retryEmbedding,
+                  chunkIndex: index
+                });
+              } catch (retryErr) {
+                console.error(`Second attempt failed for chunk ${index + 1}, skipping.`, retryErr);
+              }
+            }
+            
+            // 600ms buffer between chunks to pace Gemini Free Tier limits
+            await sleep(600);
+          }
+
+          if (chunkDocs.length > 0) {
+            await DocumentChunk.insertMany(chunkDocs);
+          }
+
+          console.log(`Document embedding complete: ${chunks.length} total chunks evaluated.`);
+
+          // Update document status to Ready
+          newDoc.status = 'Ready';
+          await newDoc.save();
+
+          // Update user's total storage used
+          const userObj = await User.findById(req.user._id);
+          userObj.totalStorageUsed += req.file.size;
+          await userObj.save();
+
+        } catch (backgroundError) {
+          newDoc.status = 'Failed';
+          await newDoc.save();
+          console.error('Background processing error:', backgroundError);
+        }
+      })();
 
     } catch (extractionError) {
       newDoc.status = 'Failed';
       await newDoc.save();
       console.error('Processing error:', extractionError);
-      return res.status(500).json({ success: false, error: 'Processing failed: ' + extractionError.message });
+      if (!res.headersSent) {
+          return res.status(500).json({ success: false, error: 'Processing failed: ' + extractionError.message });
+      }
     }
   } catch (error) {
     console.error('uploadDocument catch:', error.stack);
-    res.status(500).json({ success: false, error: 'uploadDocument: ' + error.message });
+    if (!res.headersSent) {
+        res.status(500).json({ success: false, error: 'uploadDocument: ' + error.message });
+    }
   }
 };
 
