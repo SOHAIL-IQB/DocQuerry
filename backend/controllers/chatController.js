@@ -89,20 +89,25 @@ const sendMessage = async (req, res) => {
       }
     }
 
-    // 6. Save assistant message
-    const assistantMessage = await Message.create({
-      chatId: chat._id,
-      role: 'assistant',
-      content: aiResponse.answer,
-      sources: aiResponse.sources
-    });
+    // 6. Conditionally save assistant message (DO NOT save rate-limit API quota warnings to the DB)
+    const isRateLimitError = aiResponse.answer.includes('Rate Limit Reached');
+    let assistantMessage;
+    
+    if (!isRateLimitError) {
+      assistantMessage = await Message.create({
+        chatId: chat._id,
+        role: 'assistant',
+        content: aiResponse.answer,
+        sources: aiResponse.sources
+      });
+    }
 
-    // 7. Return payload
+    // 7. Return payload to the React UI
     res.status(201).json({
       success: true,
       data: {
-        answer: assistantMessage.content,
-        sources: assistantMessage.sources
+        answer: assistantMessage ? assistantMessage.content : aiResponse.answer,
+        sources: assistantMessage ? assistantMessage.sources : aiResponse.sources
       }
     });
 
