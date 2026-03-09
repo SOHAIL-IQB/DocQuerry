@@ -6,6 +6,8 @@ const { chunkText } = require('../utils/chunkText');
 const { generateEmbedding, generateEmbeddingsBatch } = require('../utils/gemini');
 const { retrieveRelevantChunks } = require('../services/ragService');
 
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
 // @desc    Upload and process a document
 // @route   POST /api/documents/upload
 // @access  Private
@@ -34,6 +36,11 @@ const uploadDocument = async (req, res) => {
       const BATCH_SIZE = 100; // Gemini limit for batch embeddings is typically 100
       
       for (let i = 0; i < chunks.length; i += BATCH_SIZE) {
+        if (i > 0) {
+          // Add a 2-second pacing buffer between batches to prevent spiking Gemini quotas
+          await sleep(2000); 
+        }
+        
         const batchChunks = chunks.slice(i, i + BATCH_SIZE);
         // Process up to BATCH_SIZE chunks in a single API request
         const batchEmbeddings = await generateEmbeddingsBatch(batchChunks);
