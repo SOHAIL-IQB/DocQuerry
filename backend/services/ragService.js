@@ -172,9 +172,9 @@ Formatting Rules:
 - Structure the output clearly using standard markdown formatting for UI readability
 - Do not include the original question in the answer unless necessary for context`;
 
-    // 5. Invoke Gemini LLM
+    // 5. Invoke Gemini LLM (Routed to Gemini 2.5 Flash to ensure stable API quota)
     const model = genAI.getGenerativeModel({ 
-      model: 'models/gemini-flash-latest',
+      model: 'gemini-2.5-flash',
       generationConfig: {
         temperature: 0.2
       }
@@ -198,6 +198,12 @@ Formatting Rules:
         answer: "⚠️ **Gemini AI Rate Limit Reached.**\n\nYou are currently using the Google Gemini Free Tier, which limits the number of AI questions you can ask per minute. Please wait about 30-60 seconds and try sending your message again.",
         sources: []
       };
+    }
+    
+    // Explicitly bubble up Model 404 errors as crashes so they don't get mistaken for Quota limits
+    if (error.status === 404 || (error.message && error.message.includes('404'))) {
+        console.error("SDK VERSION ERROR: Gemini Model Alias Not Found (404).");
+        throw new Error('LLM Model Name Not Found.');
     }
 
     throw new Error('Failed to generate answer from LLM.');
