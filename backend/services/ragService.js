@@ -174,7 +174,7 @@ Formatting Rules:
 
     // 5. Invoke Gemini LLM
     const model = genAI.getGenerativeModel({ 
-      model: 'models/gemini-flash-latest',
+      model: 'gemini-1.5-flash',
       generationConfig: {
         temperature: 0.2
       }
