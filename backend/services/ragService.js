@@ -191,6 +191,15 @@ Formatting Rules:
 
   } catch (error) {
     console.error('Error in generateAnswer:', error);
+    
+    // Gracefully intercept Google Gemini Free Tier 429 Rate Limit Exhaustion
+    if (error.status === 429 || (error.message && error.message.includes('429'))) {
+      return {
+        answer: "⚠️ **Gemini AI Rate Limit Reached.**\n\nYou are currently using the Google Gemini Free Tier, which limits the number of AI questions you can ask per minute. Please wait about 30-60 seconds and try sending your message again.",
+        sources: []
+      };
+    }
+
     throw new Error('Failed to generate answer from LLM.');
   }
 };
