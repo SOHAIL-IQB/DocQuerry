@@ -47,16 +47,12 @@ const Settings = () => {
 
   const handleUpdateProfile = async (e) => {
     e.preventDefault();
-    console.log('[Settings UI] -> handleUpdateProfile triggered');
-    console.log('Sending Payload:', { name: displayName, avatar: selectedAvatar });
     
     setIsSavingProfile(true);
     setProfileMessage({ text: '', type: '' });
 
     try {
-      console.log('Dispatching PATCH /api/users/profile...');
       const { data } = await api.patch('/users/profile', { name: displayName, avatar: selectedAvatar });
-      console.log('PATCH Success:', data);
       
       if (data.success) {
         // Update local stored user while keeping the token intact
@@ -78,28 +74,19 @@ const Settings = () => {
 
   const handleUpdatePassword = async (e) => {
     e.preventDefault();
-    console.log('[Settings UI] -> handleUpdatePassword triggered');
-    console.log('Sending Payload with lengths:', { 
-      currentLen: currentPassword?.length, 
-      newLen: newPassword?.length 
-    });
 
     setPasswordMessage({ text: '', type: '' });
 
     if (newPassword !== confirmPassword) {
-      console.warn('Validation Failed: Passwords do not match');
       return setPasswordMessage({ text: 'New passwords do not match.', type: 'error' });
     }
     if (newPassword.length < 6) {
-      console.warn('Validation Failed: Password too short');
       return setPasswordMessage({ text: 'Password must be at least 6 characters.', type: 'error' });
     }
 
     setIsSavingPassword(true);
     try {
-      console.log('Dispatching POST /api/users/change-password...');
       const { data } = await api.post('/users/change-password', { currentPassword, newPassword });
-      console.log('POST Success:', data);
       
       if (data.success) {
         setPasswordMessage({ text: 'Password updated successfully', type: 'success' });
