@@ -28,6 +28,14 @@ const retrieveRelevantChunks = async (userId, queryEmbedding, documentIds = []) 
           limit: 100, // Fetch broader set upfront to filter down in memory
           filter: baseFilter
         }
+      },
+      {
+        $project: {
+          _id: 0,
+          chunkText: '$text', // Project mapping text to chunkText
+          documentId: 1,
+          score: { $meta: 'vectorSearchScore' }
+        }
       }
     ];
 
@@ -44,17 +52,7 @@ const retrieveRelevantChunks = async (userId, queryEmbedding, documentIds = []) 
     }
 
     // Limit down to top 3 after removing unmatched documents
-    pipeline.push(
-      { $limit: 3 },
-      {
-        $project: {
-          _id: 0,
-          chunkText: '$text', // The schema field is 'text', so we map it to 'chunkText' in the output
-          documentId: 1,
-          score: { $meta: 'vectorSearchScore' }
-        }
-      }
-    );
+    pipeline.push({ $limit: 3 });
 
     const results = await DocumentChunk.aggregate(pipeline);
     return results;
