@@ -40,12 +40,12 @@ const uploadDocument = async (req, res) => {
       // Execute vector embeddings asynchronously so the HTTP request doesn't timeout
       (async () => {
         try {
+          console.log(`Document processing started: ${newDoc._id}`);
           const chunks = chunkText(extractedText);
           console.log(`Total chunks created: ${chunks.length}`);
           
           if (chunks.length > 500) {
-            newDoc.status = 'Failed';
-            await newDoc.save();
+            await Document.findByIdAndUpdate(newDoc._id, { status: 'Failed' });
             console.warn(`[UPLOAD ABORTED] Document chunks (${chunks.length}) exceed the high-volume safety threshold.`);
             return;
           }
@@ -91,11 +91,10 @@ const uploadDocument = async (req, res) => {
             await DocumentChunk.insertMany(chunkDocs);
           }
 
-          console.log(`Document embedding complete: ${chunks.length} total chunks evaluated.`);
+          console.log(`Document embedding completed: ${newDoc._id}`);
 
-          // Update document status to Ready
-          newDoc.status = 'Ready';
-          await newDoc.save();
+          // Update document status to Ready atomically
+          await Document.findByIdAndUpdate(newDoc._id, { status: 'Ready' });
 
           // Update user's total storage used
           const userObj = await User.findById(req.user._id);
@@ -103,9 +102,8 @@ const uploadDocument = async (req, res) => {
           await userObj.save();
 
         } catch (backgroundError) {
-          newDoc.status = 'Failed';
-          await newDoc.save();
-          console.error('Background processing error:', backgroundError);
+          await Document.findByIdAndUpdate(newDoc._id, { status: 'Failed' });
+          console.error(`Background processing error for document ${newDoc._id}:`, backgroundError);
         }
       })();
 

@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const DocumentChunk = require('../models/DocumentChunk');
+const Document = require('../models/Document');
 const { genAI, generateEmbedding } = require('../utils/gemini');
 
 /**
@@ -17,6 +18,30 @@ const retrieveRelevantChunks = async (userId, queryEmbedding, documentIds = []) 
     const baseFilter = {
       userId: new mongoose.Types.ObjectId(userId)
     };
+
+    // Pre-filter documents to ensure we only query those that have finished embedding processing ('Ready')
+    let readyDocumentIds = [];
+    if (documentIds && Array.isArray(documentIds) && documentIds.length > 0) {
+       const requestedIds = documentIds.filter(id => mongoose.Types.ObjectId.isValid(id));
+       const readyDocs = await Document.find({
+           _id: { $in: requestedIds },
+           userId: new mongoose.Types.ObjectId(userId),
+           status: 'Ready'
+       }).select('_id');
+       readyDocumentIds = readyDocs.map(doc => doc._id);
+    } else {
+       // "All Documents" mode - Pull all Ready documents for the user
+       const readyDocs = await Document.find({
+           userId: new mongoose.Types.ObjectId(userId),
+           status: 'Ready'
+       }).select('_id');
+       readyDocumentIds = readyDocs.map(doc => doc._id);
+    }
+
+    // If there are literally no Ready documents available, bypass expensive Vector search
+    if (readyDocumentIds.length === 0) {
+        return [];
+    }
 
     const pipeline = [
       {
@@ -39,17 +64,12 @@ const retrieveRelevantChunks = async (userId, queryEmbedding, documentIds = []) 
       }
     ];
 
-    // Apply array-based document filtering AFTER vector search using $match
-    if (documentIds && Array.isArray(documentIds) && documentIds.length > 0) {
-      const validIds = documentIds.filter(id => mongoose.Types.ObjectId.isValid(id));
-      if (validIds.length > 0) {
-        pipeline.push({
-          $match: {
-            documentId: { $in: validIds.map(id => new mongoose.Types.ObjectId(id)) }
-          }
-        });
+    // Apply array-based document filtering AFTER vector search using $match, strictly limiting to Ready arrays
+    pipeline.push({
+      $match: {
+        documentId: { $in: readyDocumentIds }
       }
-    }
+    });
 
     // Limit down to top 3 after removing unmatched documents
     pipeline.push({ $limit: 3 });
