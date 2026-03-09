@@ -1,10 +1,10 @@
 /**
- * Splits text into chunks of roughly 4000 characters (approx 1000 tokens) to stay well within Gemini embedding limits while optimizing API 100 Request/Minute quotas.
+ * Splits text into chunks of roughly 1200 characters to optimize API quotas while sequentializing API usage.
  * 
  * @param {string} text - The extracted text to chunk.
  * @returns {string[]} Array of overlapping text chunks.
  */
-const chunkText = (text, chunkSize = 4000, overlapSize = 400) => {
+const chunkText = (text, chunkSize = 1200, overlapSize = 200) => {
   if (!text || typeof text !== 'string') return [];
 
   const chunks = [];

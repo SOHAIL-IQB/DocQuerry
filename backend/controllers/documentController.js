@@ -3,7 +3,7 @@ const User = require('../models/User');
 const DocumentChunk = require('../models/DocumentChunk');
 const { extractText } = require('../utils/extractText');
 const { chunkText } = require('../utils/chunkText');
-const { generateEmbedding, generateEmbeddingsBatch } = require('../utils/gemini');
+const { generateEmbedding } = require('../utils/gemini');
 const { retrieveRelevantChunks } = require('../services/ragService');
 
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
@@ -30,30 +30,42 @@ const uploadDocument = async (req, res) => {
     try {
       extractedText = await extractText(req.file.buffer, req.file.mimetype);
       
-      // 3. Chunk text and generate embeddings in batches
+      // 3. Chunk text, validate limits, and generate embeddings sequentially
       const chunks = chunkText(extractedText);
-      const chunkDocs = [];
-      const BATCH_SIZE = 100; // Gemini limit for batch embeddings is typically 100
       
-      for (let i = 0; i < chunks.length; i += BATCH_SIZE) {
-        if (i > 0) {
-          // Add a 2-second pacing buffer between batches to prevent spiking Gemini quotas
-          await sleep(2000); 
-        }
-        
-        const batchChunks = chunks.slice(i, i + BATCH_SIZE);
-        // Process up to BATCH_SIZE chunks in a single API request
-        const batchEmbeddings = await generateEmbeddingsBatch(batchChunks);
-        
-        batchChunks.forEach((chunkTextStr, idx) => {
+      console.log(`Total chunks created: ${chunks.length}`);
+      
+      if (chunks.length > 300) {
+        newDoc.status = 'Failed';
+        await newDoc.save();
+        console.warn(`[UPLOAD ABORTED] Document chunks (${chunks.length}) exceed the 300 safety threshold.`);
+        return res.status(400).json({ 
+          success: false, 
+          error: `Document is too large. It generated ${chunks.length} chunks (max 300 allowed).` 
+        });
+      }
+
+      const chunkDocs = [];
+      
+      for (const [index, chunkTextStr] of chunks.entries()) {
+        try {
+          console.log(`Generating embedding for chunk: ${index + 1}/${chunks.length}`);
+          const embedding = await generateEmbedding(chunkTextStr);
+          
           chunkDocs.push({
             documentId: newDoc._id,
             userId: req.user.id,
             text: chunkTextStr,
-            embedding: batchEmbeddings[idx],
-            chunkIndex: i + idx
+            embedding: embedding,
+            chunkIndex: index
           });
-        });
+          
+          // 600ms buffer between chunks to avoid rate limiting
+          await sleep(600);
+        } catch (err) {
+          console.error(`Embedding failed for chunk ${index}:`, err);
+          // Continue processing other chunks even if one fails
+        }
       }
 
       if (chunkDocs.length > 0) {
