@@ -288,9 +288,21 @@ const ChatWorkspace = () => {
                   >
                     <FileText size={14} className="selector-icon" />
                     <div className="selector-label">
-                      {selectedDocuments.length === 0 
-                        ? 'All Documents' 
-                        : `${selectedDocuments.length} Selected`}
+                      {selectedDocuments.length === 0 ? (
+                        <span>All Documents</span>
+                      ) : selectedDocuments.length <= 2 ? (
+                        selectedDocuments.map(id => {
+                          const docObj = documents.find(d => d._id === id);
+                          if (!docObj) return null;
+                          return (
+                            <span key={id} className="selected-tag" title={docObj.fileName}>
+                              {docObj.fileName}
+                            </span>
+                          );
+                        })
+                      ) : (
+                        <span className="selected-tag">{selectedDocuments.length} Selected</span>
+                      )}
                     </div>
                     <ChevronDown size={14} className="selector-chevron" />
                   </div>
