@@ -7,16 +7,18 @@ let embedder;
  * This prevents cold starts on every request.
  */
 async function initializeEmbedder() {
-  try {
-    const { pipeline } = await import('@xenova/transformers');
-    embedder = await pipeline(
-      "feature-extraction",
-      "Xenova/all-MiniLM-L6-v2"
-    );
-    console.log("Local Embedder (all-MiniLM-L6-v2) initialized successfully.");
-  } catch (error) {
-    console.error("Failed to initialize embedder:", error);
-    throw error;
+  if (!embedder) {
+    try {
+      const { pipeline } = await import('@xenova/transformers');
+      embedder = await pipeline(
+        "feature-extraction",
+        "Xenova/all-MiniLM-L6-v2"
+      );
+      console.log("MiniLM model loaded");
+    } catch (error) {
+      console.error("Failed to initialize embedder:", error);
+      throw error;
+    }
   }
 }
 

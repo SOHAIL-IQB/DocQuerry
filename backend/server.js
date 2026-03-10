@@ -6,11 +6,8 @@ const morgan = require('morgan');
 const connectDB = require('./config/db');
 const { initializeEmbedder } = require('./utils/embeddings');
 
-// Connect to MongoDB and then pre-heat local transformers model
-connectDB().then(async () => {
-  console.log("MongoDB Connected. Heating up local vector models...");
-  await initializeEmbedder();
-});
+// Remove early execution here since it will wrap the entire server
+// Bootloader logic will wrap the app.listen
 
 const app = express();
 
@@ -49,6 +46,15 @@ app.get('/', (req, res) => {
 // Define standard port
 const PORT = process.env.PORT || 5001;
 
-app.listen(PORT, () => {
-  console.log(`Server running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`);
+// Connect to MongoDB and then pre-heat local transformers model sequentially
+connectDB().then(async () => {
+  console.log("MongoDB Connected. Heating up local vector models...");
+  await initializeEmbedder();
+  
+  app.listen(PORT, () => {
+    console.log(`Server running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`);
+  });
+}).catch(err => {
+  console.error("Failed to start server securely:", err);
+  process.exit(1);
 });
