@@ -4,9 +4,13 @@ const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const connectDB = require('./config/db');
+const { initializeEmbedder } = require('./utils/embeddings');
 
-// Connect to MongoDB
-connectDB();
+// Connect to MongoDB and then pre-heat local transformers model
+connectDB().then(async () => {
+  console.log("MongoDB Connected. Heating up local vector models...");
+  await initializeEmbedder();
+});
 
 const app = express();
 

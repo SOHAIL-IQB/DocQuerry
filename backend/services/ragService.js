@@ -1,7 +1,8 @@
 const mongoose = require('mongoose');
 const DocumentChunk = require('../models/DocumentChunk');
 const Document = require('../models/Document');
-const { genAI, generateEmbedding } = require('../utils/gemini');
+const { genAI } = require('../utils/gemini');
+const { generateEmbedding } = require('../utils/embeddings');
 
 /**
  * Retrieves the most relevant document chunks for a given query embedding.
@@ -87,9 +88,9 @@ const retrieveRelevantChunks = async (userId, queryEmbedding, documentIds = []) 
         }
       },
       {
-        // Keep ONLY the top 3 most relevant chunks per document
+        // Keep ONLY the top 5 most relevant chunks per document
         $project: {
-          topChunks: { $slice: ['$chunks', 3] }
+          topChunks: { $slice: ['$chunks', 5] }
         }
       },
       {
@@ -105,8 +106,8 @@ const retrieveRelevantChunks = async (userId, queryEmbedding, documentIds = []) 
         $sort: { score: -1 }
       },
       {
-        // Limit down to top 8 diverse chunks overall across all matched documents
-        $limit: 8
+        // Limit down to top 5 diverse chunks overall across all matched documents
+        $limit: 5
       }
     );
 
@@ -148,29 +149,18 @@ const generateAnswer = async (userId, question, documentIds = []) => {
       contextStr += `\n--- Chunk ${index + 1} ---\n${source.chunkText}\n`;
     });
     
-    // Trim context length before sending to LLM (allow ~10,000 chars for up to 8 diverse chunks)
-    contextStr = contextStr.slice(0, 10000);
+    // Trim context length before sending to LLM (allow ~15,000 chars)
+    contextStr = contextStr.slice(0, 15000);
 
     // 4. Construct Strict Prompt
-    const prompt = `Context:
+    const prompt = `SYSTEM:
+"You are an AI assistant answering questions strictly from the provided documents."
+
+CONTEXT:
 ${contextStr}
 
-Question:
-${question}
-
-Instructions:
-You are an intelligent AI assistant that answers questions based ONLY on the provided document context. Evaluate ALL of the provided context chunks across different documents to form a comprehensive answer.
-CRITICAL: DO NOT use phrases like "based on the provided chunk", "according to the document", or "in chunk 2". Just answer the question naturally and directly, weaving the facts together seamlessly.
-If the answer is entirely missing from the provided context, simply say:
-"I could not find this information in the selected document."
-Do not guess or fabricate information.
-
-Formatting Rules:
-- Use numbered lists for multiple questions or steps
-- Separate the question and answer clearly if addressing multiple parts
-- Avoid long single paragraphs; break text into readable chunks
-- Structure the output clearly using standard markdown formatting for UI readability
-- Do not include the original question in the answer unless necessary for context`;
+QUESTION:
+${question}`;
 
     // 5. Invoke Gemini LLM (Routed to Gemini 2.0 Flash to ensure stable API quota)
     const model = genAI.getGenerativeModel({ 

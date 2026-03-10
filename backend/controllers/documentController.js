@@ -3,7 +3,7 @@ const User = require('../models/User');
 const DocumentChunk = require('../models/DocumentChunk');
 const { extractText } = require('../utils/extractText');
 const { chunkText } = require('../utils/chunkText');
-const { generateEmbedding } = require('../utils/gemini');
+const { generateEmbedding } = require('../utils/embeddings');
 const { retrieveRelevantChunks } = require('../services/ragService');
 
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
@@ -44,9 +44,9 @@ const uploadDocument = async (req, res) => {
           const chunks = chunkText(extractedText);
           console.log(`Total chunks created: ${chunks.length}`);
           
-          if (chunks.length > 500) {
+          if (chunks.length > 300) {
             await Document.findByIdAndUpdate(newDoc._id, { status: 'Failed' });
-            console.warn(`[UPLOAD ABORTED] Document chunks (${chunks.length}) exceed the high-volume safety threshold.`);
+            console.warn(`[UPLOAD ABORTED] Document chunks (${chunks.length}) exceed the high-volume safety threshold of 300.`);
             return;
           }
 
@@ -82,9 +82,6 @@ const uploadDocument = async (req, res) => {
                 console.error(`Second attempt failed for chunk ${index + 1}, skipping.`, retryErr);
               }
             }
-            
-            // 600ms buffer between chunks to pace Gemini Free Tier limits
-            await sleep(600);
           }
 
           if (chunkDocs.length > 0) {
