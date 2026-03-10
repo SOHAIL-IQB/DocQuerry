@@ -12,7 +12,7 @@ const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
  * @returns {Promise<number[]>} - The embedding vector.
  */
 const generateEmbedding = async (text, maxRetries = 10) => {
-  const model = genAI.getGenerativeModel({ model: 'gemini-embedding-001' });
+  const model = genAI.getGenerativeModel({ model: 'text-embedding-004' });
   
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
@@ -38,7 +38,7 @@ const generateEmbedding = async (text, maxRetries = 10) => {
  * @returns {Promise<number[][]>} - Array of embedding vectors.
  */
 const generateEmbeddingsBatch = async (texts, maxRetries = 10) => {
-  const model = genAI.getGenerativeModel({ model: 'gemini-embedding-001' });
+  const model = genAI.getGenerativeModel({ model: 'text-embedding-004' });
   const requests = texts.map(text => ({
     content: { role: "user", parts: [{ text }] }
   }));

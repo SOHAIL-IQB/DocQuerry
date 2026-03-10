@@ -172,9 +172,9 @@ Formatting Rules:
 - Structure the output clearly using standard markdown formatting for UI readability
 - Do not include the original question in the answer unless necessary for context`;
 
-    // 5. Invoke Gemini LLM (Routed to Gemini 1.5 Flash to ensure stable API quota)
+    // 5. Invoke Gemini LLM (Routed to Gemini 2.0 Flash to ensure stable API quota)
     const model = genAI.getGenerativeModel({ 
-      model: 'gemini-1.5-flash',
+      model: 'gemini-2.0-flash',
       generationConfig: {
         temperature: 0.2
       }
