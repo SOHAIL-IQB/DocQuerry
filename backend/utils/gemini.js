@@ -1,5 +1,7 @@
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 
+// IMPORTANT: API keys must never be hardcoded.
+// Use environment variables only.
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
