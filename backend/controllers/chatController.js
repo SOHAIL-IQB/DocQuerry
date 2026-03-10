@@ -40,8 +40,8 @@ const sendMessage = async (req, res) => {
   try {
     const { chatId, question, documentIds } = req.body;
 
-    if (!chatId || !question) {
-      return res.status(400).json({ success: false, error: 'chatId and question are required' });
+    if (!chatId || !question || !documentIds) {
+      return res.status(400).json({ success: false, message: 'Invalid request payload: chatId, question, and documentIds are required' });
     }
 
     // 1. Fetch the chat
@@ -85,7 +85,11 @@ const sendMessage = async (req, res) => {
         aiResponse = await generateAnswer(req.user._id, question, documentIds || []);
       } catch (llmError) {
         console.error('generateAnswer error:', llmError);
-        return res.status(500).json({ success: false, error: 'Failed to generate answer' });
+        return res.status(500).json({ 
+          success: false, 
+          message: 'Failed to generate response',
+          error: llmError.message || 'LLM Generation failed'
+        });
       }
     }
 
@@ -112,8 +116,12 @@ const sendMessage = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error in sendMessage:', error);
-    res.status(500).json({ success: false, error: 'Server error' });
+    console.error("Chat processing error:", error);
+    return res.status(500).json({ 
+      success: false, 
+      message: "Failed to process chat message", 
+      error: error.message 
+    });
   }
 };
 

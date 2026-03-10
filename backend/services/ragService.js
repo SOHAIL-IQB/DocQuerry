@@ -132,12 +132,12 @@ const generateAnswer = async (userId, question, documentIds = []) => {
     // 1. Generate embedding for user query
     const queryEmbedding = await generateEmbedding(question);
 
-    // 2. Retrieve relevant chunks (limits to 3)
+    // 2. Retrieve relevant chunks (limits to 8)
     const sources = await retrieveRelevantChunks(userId, queryEmbedding, documentIds);
 
-    if (sources.length === 0) {
+    if (!sources || sources.length === 0) {
       return {
-        answer: 'I could not find this information in the selected document.',
+        answer: "I could not find relevant information in the selected documents.",
         sources: []
       };
     }
