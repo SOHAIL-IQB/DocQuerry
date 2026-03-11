@@ -41,8 +41,8 @@ When a user asks a question, the application uses its RAG architecture to perfor
 - **Multer** (Multipart/form-data parsing)
 
 ### AI Components
-- **Google Gemini API** (For Answer Generation via `gemini-1.5-flash`)
-- **Google Generative AI Embeddings** (For Vector Embeddings via `text-embedding-004`)
+- **Groq API** (For ultra-fast Answer Generation via `llama-3.1-8b-instant`)
+- **Xenova Transformers** (Local Vector Embeddings via `all-MiniLM-L6-v2`)
 - **Custom Text Chunking & Overlap Algorithms**
 
 ---
@@ -58,7 +58,7 @@ The system strictly follows an advanced Retrieval-Augmented Generation workflow 
 5. **↓ Vector storage** writes vectors to **MongoDB** mapped back to their parent Document IDs.
 6. **↓ User asks a question** via the application workspace.
 7. **↓ Vector search retrieves relevant chunks** comparing query intent against stored vectors.
-8. **↓ Gemini generates the final answer** synthesizing the retrieved components.
+8. **↓ Groq LLM generates the final answer** synthesizing the retrieved local components.
 
 ---
 
@@ -120,7 +120,7 @@ PORT=5000
 NODE_ENV=development
 MONGO_URI=your_mongodb_atlas_connection_string
 JWT_SECRET=a_secure_randomly_generated_string
-GEMINI_API_KEY=your_google_ai_studio_key
+GROQ_API_KEY=your_groq_api_key
 ```
 
 ### 5. Start the Application Environment
