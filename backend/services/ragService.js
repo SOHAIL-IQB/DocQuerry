@@ -121,7 +121,7 @@ const retrieveRelevantChunks = async (userId, queryEmbedding, documentIds = []) 
 
 /**
  * Generates an answer to a user's question purely based on the retrieved context chunks.
- * Uses Google Gemini 1.5 Flash with strict grounding instructions.
+ * Uses Groq LLaMA 3.1 8B with strict grounding instructions.
  * 
  * @param {string} userId - The ID of the user (for workspace isolation).
  * @param {string} question - The user's prompt question.

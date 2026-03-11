@@ -86,9 +86,8 @@ const sendMessage = async (req, res) => {
       } catch (llmError) {
         console.error('generateAnswer error:', llmError);
         return res.status(500).json({ 
-          success: false, 
-          message: 'Failed to generate response',
-          error: llmError.message || 'LLM Generation failed'
+          error: "AI generation failed",
+          message: llmError.message || "Unknown AI integration error"
         });
       }
     }
@@ -118,9 +117,8 @@ const sendMessage = async (req, res) => {
   } catch (error) {
     console.error("Chat processing error:", error);
     return res.status(500).json({ 
-      success: false, 
-      message: "Failed to process chat message", 
-      error: error.message 
+      error: "AI generation failed",
+      message: error.message 
     });
   }
 };
