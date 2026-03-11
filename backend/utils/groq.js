@@ -1,4 +1,4 @@
-import OpenAI from "openai";
+const OpenAI = require("openai");
 
 // Initialize OpenAI client specifically using the Groq API Base URL
 // Requires process.env.GROQ_API_KEY
@@ -7,4 +7,4 @@ const groq = new OpenAI({
   apiKey: process.env.GROQ_API_KEY
 });
 
-export default groq;
+module.exports = groq;

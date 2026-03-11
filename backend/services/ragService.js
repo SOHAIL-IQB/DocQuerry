@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 const DocumentChunk = require('../models/DocumentChunk');
 const Document = require('../models/Document');
 const { generateEmbedding } = require('../utils/embeddings');
-const groq = require('../utils/groq').default || require('../utils/groq');
+const groq = require('../utils/groq');
 
 /**
  * Retrieves the most relevant document chunks for a given query embedding.
