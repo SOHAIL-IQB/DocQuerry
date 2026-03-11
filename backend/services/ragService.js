@@ -1,8 +1,8 @@
 const mongoose = require('mongoose');
 const DocumentChunk = require('../models/DocumentChunk');
 const Document = require('../models/Document');
-const { genAI } = require('../utils/gemini');
 const { generateEmbedding } = require('../utils/embeddings');
+const groq = require('../utils/groq').default || require('../utils/groq');
 
 /**
  * Retrieves the most relevant document chunks for a given query embedding.
@@ -162,16 +162,19 @@ ${contextStr}
 QUESTION:
 ${question}`;
 
-    // 5. Invoke Gemini LLM (Routed to Gemini 2.0 Flash to ensure stable API quota)
-    const model = genAI.getGenerativeModel({ 
-      model: 'gemini-2.0-flash',
-      generationConfig: {
-        temperature: 0.2
-      }
+    // 5. Invoke Groq LLM (Routed to llama-3.1-8b-instant)
+    const completion = await groq.chat.completions.create({
+      model: "llama-3.1-8b-instant",
+      messages: [
+        {
+          role: "user",
+          content: prompt
+        }
+      ],
+      temperature: 0.2
     });
 
-    const result = await model.generateContent(prompt);
-    const answer = result?.response?.text?.() || "The uploaded documents do not contain this information.";
+    const answer = completion.choices[0]?.message?.content || "The uploaded documents do not contain this information.";
 
     // 6. Return exact payload
     return {
@@ -182,21 +185,8 @@ ${question}`;
   } catch (error) {
     console.error('Error in generateAnswer:', error);
     
-    // Gracefully intercept Google Gemini Free Tier 429 Rate Limit Exhaustion
-    if (error.status === 429 || (error.message && error.message.includes('429'))) {
-      return {
-        answer: "⚠️ **Gemini AI Rate Limit Reached.**\n\nYou are currently using the Google Gemini Free Tier, which limits the number of AI questions you can ask per minute. Please wait about 30-60 seconds and try sending your message again.",
-        sources: []
-      };
-    }
-    
-    // Explicitly bubble up Model 404 errors as crashes so they don't get mistaken for Quota limits
-    if (error.status === 404 || (error.message && error.message.includes('404'))) {
-        console.error("SDK VERSION ERROR: Gemini Model Alias Not Found (404).");
-        throw new Error('LLM Model Name Not Found.');
-    }
-
-    throw new Error('Failed to generate answer from LLM.');
+    // Gracefully bubble Groq SDK errors as HTTP 500 generic catches
+    throw new Error(error.message || 'Failed to generate answer from Groq LLM.');
   }
 };
 
